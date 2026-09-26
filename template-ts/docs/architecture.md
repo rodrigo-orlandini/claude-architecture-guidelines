@@ -5,6 +5,8 @@ Modular monolith with Clean Architecture. A single repository, but each module i
 Review rules (short checklist): `src/shared/core/architecture-rules.md`.
 Domain glossary: `CONTEXT.md`.
 
+This kit scales from a small CRUD service to a complex system. The reference module doesn't use a cache, a queue, or an outbox pattern — those (and full telemetry) are opt-in layers, added when a feature genuinely needs them, only after asking the user. See "Scope discipline" in `CLAUDE.md`.
+
 ---
 
 ## 1. Stack
@@ -17,11 +19,11 @@ Domain glossary: `CONTEXT.md`.
 | DI / IoC | tsyringe + reflect-metadata |
 | ORM | Prisma 5 |
 | Database | PostgreSQL 16 |
-| Cache / queues | Redis 7 (ioredis, BullMQ when needed) |
+| Cache / queues | not used by the reference module — Redis is provisioned in `docker-compose.yml` as shared infra, ioredis/BullMQ get added only when a real feature needs them (ask first, see "Scope discipline") |
 | Validation | Fastify JSON schema at the edge; zod for external payloads |
-| Logs | pino (JSON) + AsyncLocalStorage for correlationId |
-| Metrics | prom-client (`GET /metrics`) |
-| Tracing | OpenTelemetry (OTLP → Tempo, or console) |
+| Logs | pino (JSON) + AsyncLocalStorage for correlationId — always on |
+| Metrics | prom-client (`GET /metrics`) — opt-in, see §7 |
+| Tracing | OpenTelemetry (OTLP → Tempo, or console) — opt-in, see §7 |
 | Tests | Vitest 2 (unit, integration, combined coverage) |
 | Containers | Docker multistage + Docker Compose (dev, test, observability) |
 | CI | GitHub Actions: build → unit ∥ integration → coverage 80% |
@@ -49,7 +51,7 @@ src/
 │   ├── errors/
 │   │   ├── domain-error.ts      # abstract base class with `code`
 │   │   └── http-error-mapper.ts # code → HTTP status
-│   ├── observability/
+│   ├── observability/            # metrics.ts/tracer.ts present only if telemetry was enabled — see §7
 │   │   ├── context.ts           # AsyncLocalStorage { correlationId, ...business ids }
 │   │   ├── logger.ts            # pino + getLogger() with context and traceId
 │   │   ├── metrics.ts           # prom-client registry + named metrics
@@ -149,8 +151,13 @@ TDD loop: red spec → repository interface if needed → minimal green implemen
 
 ---
 
-## 7. Observability
+## 7. Observability (opt-in)
 
+Decided once, at bootstrap (`BOOTSTRAP-TS.md`), by asking the user. Can also be added later, on request, following the same shape below.
+
+**Always on, regardless of the answer:** structured logging (pino) + correlationId. Cheap, and useful at any project size — not considered "telemetry" for this decision.
+
+**Only if enabled:**
 - `onRequest` hook: reads `x-correlation-id` (or uses `request.id`), returns it in the header, stores it in AsyncLocalStorage, opens the `http.request` span.
 - `addToContext({ orderId })` adds business ids to the current context; every subsequent `getLogger()` in the flow includes them.
 - `onResponse` hook: `http_request_duration_ms{method,route,status_code}` histogram, closes the span.
@@ -158,6 +165,8 @@ TDD loop: red spec → repository interface if needed → minimal green implemen
 - Business metrics declared in `shared/observability/metrics.ts`.
 - Async flows (queue, outbox): propagate `correlationId` and the business id in the job payload and reopen the context in the worker with `runWithContext`.
 - Local stack: `node scripts/compose.mjs -f docker-compose.observability.yml up -d` → Grafana `:3001`, Prometheus `:9090`, Tempo `:3200/:4318`, Loki `:3100`.
+
+**If declined:** none of `shared/observability/{metrics,tracer}.ts`, the span/metric calls in `server.ts`'s hooks, `docker-compose.observability.yml`, or `grafana/` exist in this project. `context.ts` + `logger.ts` still do — the hooks just seed the context and return the correlation header, no span/metric.
 
 ---
 
@@ -167,7 +176,7 @@ TDD loop: red spec → repository interface if needed → minimal green implemen
 - `docker-compose.yml`: app + Postgres 16 + Redis 7 with healthcheck; explicit `container_name` `{{project-slug}}-*`.
 - `docker-compose.test.yml`: isolated Postgres (5433) and Redis (6380) for integration; schema applied with `prisma db push --force-reset` (disposable database).
 - Schema in dev/prod: migrations (`prisma/migrations/`, created with `npm run db:migrate`, applied with `prisma migrate deploy` — the `dev` container runs this on startup).
-- `docker-compose.observability.yml`: Prometheus, Tempo, Loki, Promtail, provisioned Grafana.
+- `docker-compose.observability.yml` + `grafana/`: only present if observability was enabled (§7).
 - `scripts/compose.mjs`: `docker compose` wrapper — uses native Docker or, on Windows without Docker Desktop, `wsl docker`. All npm scripts go through it.
 
 ---
@@ -182,7 +191,7 @@ TDD loop: red spec → repository interface if needed → minimal green implemen
 | Plan execution | `superpowers:subagent-driven-development` (ledger in `.superpowers/sdd/`, outside git) |
 | Entity/VO modeling | `domain-modeler` skill |
 | Implementation | `tdd-agent` agent |
-| Observability | `observability-enforcer` skill |
+| Observability | `observability-enforcer` skill (only if enabled, §7) |
 | Diff review | `arch-reviewer` agent |
 | Before closing | `superpowers:verification-before-completion` |
 | Integration | `superpowers:finishing-a-development-branch` → PR |
@@ -196,7 +205,7 @@ domain-modeler         → entity/VO modeled, CONTEXT.md updated
   ↓
 tdd-agent              → red → green → refactor per use-case
   ↓
-observability-enforcer → correlationId, metrics, spans present
+observability-enforcer → correlationId always; metrics/spans only if enabled
   ↓
 arch-reviewer          → dependency rule, Either, kebab-case, DI ok
   ↓
@@ -204,6 +213,8 @@ verification-before-completion → typecheck + tests run, output checked
   ↓
 commit (Conventional Commits) → PR → green CI → merge
 ```
+
+Bootstrap only scaffolds and validates — it does not run this loop automatically. See `BOOTSTRAP-TS.md`.
 
 Every relevant prompt goes into `prompts/NN-<topic>.md` (see `prompts/CLAUDE.md`) and is indexed in `PROMPTS.md`.
 Decisions that should not be re-discussed become an ADR in `docs/adr/NNNN-<title>.md`.

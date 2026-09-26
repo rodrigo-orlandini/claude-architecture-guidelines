@@ -3,6 +3,12 @@
 Review checklist referenced by `arch-reviewer`, `tdd-agent`, and `observability-enforcer`.
 Go equivalent of the TypeScript kit's `src/shared/core/architecture-rules.md` — same principles, different idiomatic mechanism where the language requires it.
 
+## Scope discipline
+
+- Default to the simplest thing that works: a synchronous module, no cache, no queue, no outbox pattern.
+- Before adding a cache, a queue/worker, an outbox pattern, or any other layer aimed at "large project" scale, **ask the user first** — see `CLAUDE.md`, "Scope discipline". This rule has no autonomous-mode exception.
+- Observability (tracing/metrics/Grafana stack) is one of these opt-in layers too — see "Observability" below.
+
 ## Dependencies between layers
 
 - `domain/` doesn't import anything from outside the module's own domain (only `internal/platform/httperr` and stdlib)
@@ -26,6 +32,7 @@ Go doesn't have `Either`; the native `(T, error)` pair fulfills the same role.
 - Status: VO validation 422; resource not found 404; conflict/invalid transition 409; invalid body shape 400 (via `json.Decoder.DisallowUnknownFields()`, no schema library needed)
 - Invariant enforced by the database (unique, FK) under concurrency: the Postgres adapter catches the driver error (`pgconn.PgError`, code `23505` etc.) and returns a `*httperr.DomainError`, never trust only "check then write". Pattern in `internal/modules/example/adapters/postgres/errors.go`
 - Reference to a module that doesn't exist yet: store only the opaque id (string), no FK or validation; record it as an assumption and add validation via a port when the module exists
+- Cache, queue, outbox pattern: not present by default (see "Scope discipline"). When added, they're ports too — define the interface in `usecase/ports.go` (or `internal/platform` if cross-module), same as any other adapter, and ask the user before starting
 
 ## Naming
 
@@ -61,10 +68,15 @@ Go doesn't use a DI container. Wiring is manual and explicit.
 
 ## Observability
 
+Structured logging + correlationId are always on (cheap, framework-agnostic, useful at any project size). Tracing/metrics/Grafana are opt-in — decided at bootstrap (`BOOTSTRAP-GO.md`) or added later, on request.
+
+If enabled:
 - `correlationId` read from `x-correlation-id` or generated, propagated via `context.Context` (`internal/platform/observability`), never a global variable
 - Structured logs via `log/slog` + `observability.FromContext(ctx)`, never `fmt.Println`/`log.Println` outside `cmd/`
 - Business IDs added to the context with `observability.AddFields(ctx, map[string]string{...})` as soon as they exist
 - Prometheus metrics in `internal/platform/observability/metrics.go`, exposed at `GET /metrics`
 - OpenTelemetry spans on routes (via middleware) and critical use-cases (`observability.Tracer("<module>")`)
 - Watch out for `r.WithContext`: it returns a copy of the request. Any middleware that needs to read something another middleware wrote (correlationId, `ServeMux`'s `r.Pattern`) only sees the change if it's "after" it in the chain, meaning the middleware that swaps the context must wrap all the others from the outside. Real bug found and fixed while building this kit: `withCorrelationID` must be the outermost middleware (see `internal/platform/httpserver/server.go`)
+
+If declined: skip the metrics/tracing bullets above; `correlationId` + structured logging still apply.
 </content>

@@ -2,6 +2,12 @@
 
 Review checklist referenced by `arch-reviewer`, `tdd-agent`, and `observability-enforcer`.
 
+## Scope discipline
+
+- Default to the simplest thing that works: a synchronous module, no cache, no queue, no outbox pattern.
+- Before adding a cache, a queue/worker, an outbox pattern, or any other layer aimed at "large project" scale, **ask the user first** — see `CLAUDE.md`, "Scope discipline". This rule has no autonomous-mode exception.
+- Observability (tracing/metrics/Grafana stack) is one of these opt-in layers too — see "Observability" below.
+
 ## Dependencies between layers
 
 - `entities/` does not import anything from outside the module's own domain (only `@shared/core` and `@shared/errors`)
@@ -30,6 +36,7 @@ Review checklist referenced by `arch-reviewer`, `tdd-agent`, and `observability-
 - Invariant guaranteed by the database (unique, FK) under concurrency: the Prisma repository catches the error (e.g. `P2002`) and the port returns an `Either` with the corresponding DomainError; the use-case forwards the `left`. Don't rely only on "check before writing"
 - Reference to a module that doesn't exist yet: store only the opaque id (UUID), with no FK or validation; record it as an assumption and add validation (via a port) once the module exists
 - Write (POST/PUT): controller validates shape with a JSON schema (`required`, `additionalProperties: false`); use-case validates VOs, builds the entity, persists via the port, returns the entity; controller responds 201 (creation) / 200 via the presenter
+- Cache, queue, outbox pattern: not present by default (see "Scope discipline"). When added, they're ports too — define the interface in `repositories/` or `shared/`, same as any other adapter, and ask the user before starting
 
 ## Naming
 
@@ -63,9 +70,14 @@ Review checklist referenced by `arch-reviewer`, `tdd-agent`, and `observability-
 
 ## Observability
 
+Structured logging + correlationId are always on (cheap, framework-agnostic, useful at any project size). Tracing/metrics/Grafana are opt-in — decided at bootstrap (`BOOTSTRAP-TS.md`) or added later, on request.
+
+If enabled:
 - `correlationId` propagated on every request (`x-correlation-id` header or generated) via AsyncLocalStorage
 - Structured logs with pino: `getLogger()` outside a controller, `request.log` inside a controller
 - Business IDs (e.g. `orderId`, `userId`) in the context via `addToContext()` as soon as known — appear in every subsequent log of the flow
 - Prometheus metrics in `@shared/observability/metrics`, exposed at `GET /metrics`
 - OpenTelemetry spans on critical routes and use-cases
 - Forbidden: `console.log` — structured logger only (exception: bootstrap fatal in `main.ts`)
+
+If declined: skip the metrics/tracing bullets above; `correlationId` + structured logging still apply.

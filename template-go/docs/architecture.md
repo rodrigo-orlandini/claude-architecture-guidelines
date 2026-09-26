@@ -5,6 +5,8 @@ Modular monolith with Clean Architecture, in Go. Same philosophy as the TypeScri
 Review rules (short checklist): `docs/architecture-rules.md`.
 Domain glossary: `CONTEXT.md`.
 
+This kit scales from a small CRUD service to a complex system. The reference module doesn't use a cache, a queue, or an outbox pattern — those (and full telemetry) are opt-in layers, added when a feature genuinely needs them, only after asking the user. See "Scope discipline" in `CLAUDE.md`.
+
 ---
 
 ## 1. Stack
@@ -18,9 +20,10 @@ Domain glossary: `CONTEXT.md`.
 | Database | PostgreSQL 16 |
 | Migrations | goose, used as a library (`internal/platform/db`), not a global CLI |
 | Tests | stdlib `testing` + build tags (`integration`) to separate unit from integration |
-| Logs | `log/slog` (JSON) + `context.Context` for correlationId |
-| Metrics | `prometheus/client_golang` (`GET /metrics`) |
-| Tracing | OpenTelemetry Go SDK (OTLP → Tempo, or stdout) |
+| Logs | `log/slog` (JSON) + `context.Context` for correlationId — always on |
+| Cache / queues | not used by the reference module — added only when a real feature needs them (ask first, see "Scope discipline"); no Redis provisioned by default |
+| Metrics | `prometheus/client_golang` (`GET /metrics`) — opt-in, see §7 |
+| Tracing | OpenTelemetry Go SDK (OTLP → Tempo, or stdout) — opt-in, see §7 |
 | Containers | Docker multistage + Docker Compose (dev, test, observability) |
 | CI | GitHub Actions: build → unit ∥ integration → coverage 80% |
 
@@ -40,7 +43,7 @@ internal/
 │   ├── db/             # pgxpool.Pool + RunMigrations (goose)
 │   ├── httperr/        # DomainError + code→HTTP status map
 │   ├── httpserver/      # http.ServeMux + middleware chain
-│   └── observability/   # slog, prometheus, otel, context (correlationId + business ids)
+│   └── observability/   # slog + context always present; metrics.go/tracer.go only if telemetry enabled — see §7
 └── modules/
     └── <module>/
         ├── domain/            # entity, value objects, module errors
@@ -113,13 +116,20 @@ TDD loop: red test → port interface if needed → minimal green implementation
 
 ---
 
-## 7. Observability
+## 7. Observability (opt-in)
 
+Decided once, at bootstrap (`BOOTSTRAP-GO.md`), by asking the user. Can also be added later, on request, following the same shape below.
+
+**Always on, regardless of the answer:** structured logging (`log/slog`) + correlationId. Cheap, and useful at any project size — not considered "telemetry" for this decision.
+
+**Only if enabled:**
 - The `withCorrelationID` middleware (the outermost in the chain — see `docs/architecture-rules.md` for why) reads `x-correlation-id` or generates one, returns it in the header, and calls `observability.WithCorrelationID(ctx, id)`.
 - `observability.AddFields(ctx, map[string]string{...})` adds business ids to the same context; `observability.FromContext(ctx)` returns a `*slog.Logger` already carrying `correlationId`, business ids, and `traceId`/`spanId` (if there's an active span).
 - Business metrics declared in `internal/platform/observability/metrics.go`, registered in `init()`.
 - Async flows (queue, worker): propagate the `context.Context` from start to end of the job; never `context.Background()` in the middle of a flow that already had a `correlationId`.
 - Local stack: `docker compose -f docker-compose.observability.yml up -d` → Grafana `:3001`, Prometheus `:9090`, Tempo `:3200`/`:4318`, Loki `:3100`.
+
+**If declined:** none of `internal/platform/observability/{metrics,tracer}.go`, `withMetrics`/span creation in `middleware.go`, `docker-compose.observability.yml`, or `grafana/` exist in this project. `context.go` + the correlationId part of the middleware still do.
 
 ---
 
@@ -128,7 +138,7 @@ TDD loop: red test → port interface if needed → minimal green implementation
 - Multistage `Dockerfile`: `dev` (`go run ./cmd/api`, bind-mounted code), `build` (static binary), `prod` (`gcr.io/distroless/static-debian12` — just the binary, no shell, no toolchain).
 - `docker-compose.yml`: app + Postgres 16, no Redis by default (the `example` module doesn't use cache; add the service when a real module needs it).
 - `docker-compose.test.yml`: isolated Postgres (port 5433) for integration.
-- `docker-compose.observability.yml`: Prometheus, Tempo, Loki, Promtail, provisioned Grafana (same stack as the TS kit).
+- `docker-compose.observability.yml` + `grafana/`: only present if observability was enabled (§7); same stack as the TS kit.
 
 ---
 
@@ -156,10 +166,12 @@ Same as the TS kit — only the list of skills/agents changes "flavor":
 | Plan execution | `superpowers:subagent-driven-development` |
 | Entity/VO modeling | `domain-modeler` skill |
 | Implementation | `tdd-agent` agent |
-| Observability | `observability-enforcer` skill |
+| Observability | `observability-enforcer` skill (only if enabled, §7) |
 | Diff review | `arch-reviewer` agent |
 | Before closing | `superpowers:verification-before-completion` |
 | Integration | `superpowers:finishing-a-development-branch` → PR |
+
+Bootstrap only scaffolds and validates — it does not run this loop automatically. See `BOOTSTRAP-GO.md`.
 
 Every relevant prompt goes to `prompts/NN-<topic>.md` (see `prompts/CLAUDE.md`) and is indexed in `PROMPTS.md`. Decisions that shouldn't be re-discussed become an ADR in `docs/adr/NNNN-<title>.md`.
 </content>
