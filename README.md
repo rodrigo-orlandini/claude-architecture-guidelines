@@ -44,15 +44,16 @@ Each variant has already been validated by running an agent **with no prior cont
 2. Create the new project's folder (empty, or with just `.git`), open Claude Code in it, and paste:
 
    ```
-   Read ~/claude-architecture-guidelines/BOOTSTRAP.md and follow every step to apply the structure to this project.
-   Stack: TypeScript | Go. Project name: <Readable Name>. Domain: <one or two sentences about what the system does>.
+   Read ~/claude-architecture-guidelines/BOOTSTRAP.md and follow it to apply the structure to this project.
    ```
 
-3. The agent picks the variant (`BOOTSTRAP-TS.md` or `BOOTSTRAP-GO.md`), copies the template, substitutes the placeholders, installs dependencies, validates everything (build + tests, unit and integration against a real Postgres), and runs a short brainstorming pass to model the initial domain.
+   Give it whatever you already know — language, framework, project name, scope — and it asks for whatever's missing. It never guesses these; it stops and asks.
 
-4. At the end you have: the project running, CI configured, the first real module implemented following TDD, and `CONTEXT.md` filled in with the domain glossary.
+3. The agent copies the matching template (TypeScript+Fastify, TypeScript+NestJS, or Go), substitutes the placeholders, installs dependencies, and validates everything (build + tests, unit and integration against a real Postgres). **It stops there — it doesn't model your domain or write any feature on its own.**
 
-Without AI, or to understand each step before running it: follow `BOOTSTRAP-TS.md`/`BOOTSTRAP-GO.md` manually — every step is an ordinary command (`cp`, `sed`, `npm`/`go`, `git`).
+4. From there, development is prompt-driven and incremental, the same as any other day with this kit: tell it what to build first, or, if you have the `superpowers` plugin, ask it to run `superpowers:brainstorming` to plan the domain with you before writing code. Either way, it builds one module/slice at a time through the normal flow (`session-start` → brainstorming → plan → TDD → review → PR), not the whole system in one shot.
+
+Without AI, or to understand each step before running it: follow `BOOTSTRAP-TS.md`/`BOOTSTRAP-NEST.md`/`BOOTSTRAP-GO.md` manually — every step is an ordinary command (`cp`, `sed`, `npm`/`go`, `git`).
 
 ## Contents
 

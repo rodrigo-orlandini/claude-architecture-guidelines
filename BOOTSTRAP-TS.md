@@ -1,19 +1,14 @@
-# BOOTSTRAP-TS — apply the TypeScript structure to a new project
+# BOOTSTRAP-TS — apply the TypeScript + Fastify structure to a new project
 
-> TypeScript stack (Fastify + tsyringe + Prisma + Vitest). For Go, use `BOOTSTRAP-GO.md`.
+> TypeScript stack, Fastify framework (Fastify + tsyringe + Prisma + Vitest). For NestJS, use `BOOTSTRAP-NEST.md`; for Go, use `BOOTSTRAP-GO.md`.
 
-Executable playbook. Written for an AI agent with no prior context, but anyone can follow it.
+Executable playbook. Written for an AI agent with no prior context, but anyone can follow it. Assumes `BOOTSTRAP.md`'s Step A already collected the four required inputs (project name, scope, and — implicitly, by routing here — language + framework); if you're reading this file directly without having gone through `BOOTSTRAP.md`, go do that first.
 
 - `$KIT` = the folder this file is in (the `_architecture/` folder whose path was given in the prompt).
 - `$DEST` = the new project's root = the current working directory.
+- `{{PROJECT_NAME}}`, `{{project-slug}}`, `{{project_db}}`, `{{PROJECT_DESCRIPTION}}` — derived from the project name and scope gathered in `BOOTSTRAP.md` Step A. Don't re-ask for them here.
 
-Inputs (ask the user if missing; in autonomous execution, derive them):
-- **Readable name** → `{{PROJECT_NAME}}` (e.g. `Task Hub`)
-- **kebab-case slug** → `{{project-slug}}` (e.g. `task-hub`; derive from the name)
-- **snake_case database name** → `{{project_db}}` (e.g. `task_hub`; slug with `-` swapped for `_`)
-- **Domain description** (1–3 sentences) — used in step 7; the first sentence becomes `{{PROJECT_DESCRIPTION}}` (the project's README)
-
-**Autonomous mode** (no one available to answer questions or approve): at every point that asks for a user response/approval, pick the simplest option compatible with the domain description, record the decision in an **Assumptions** section of the spec (step 7), and proceed. Never invent a requirement the description doesn't suggest.
+This playbook only scaffolds and validates the template (steps 0–6). **It does not model the domain and does not implement any module.** That starts later, from the user's own prompts — see the end of this file.
 
 ---
 
@@ -48,7 +43,7 @@ grep -rl --exclude-dir=node_modules -e '{{PROJECT_NAME}}' -e '{{project-slug}}' 
                  -e 's/{{PROJECT_DESCRIPTION}}/API for small teams to manage tasks./g'
 ```
 
-If the description has `/` or `&`, escape them in `sed` or edit `README.md` by hand.
+(Replace the example values above with the real project name/slug/db/description gathered in `BOOTSTRAP.md` Step A.) If the description has `/` or `&`, escape them in `sed` or edit `README.md` by hand.
 
 `grafana/provisioning/dashboards/app.json` contains `{{route}}` — that's Grafana syntax, **don't** substitute it (the command above doesn't touch it).
 
@@ -83,30 +78,29 @@ git commit -m "chore: bootstrap modular monolith architecture"
 
 Don't push or create a remote repository unless the user asks (`SETUP.md` §5).
 
-## Step 7 — Domain
+## Step 7 — Hand off (stop here)
 
-With the user present: invoke `superpowers:brainstorming` with the domain description.
-Autonomous mode: don't invoke the skill (it depends on Q&A); do the short version below yourself.
+The scaffold is ready. **Do not model the domain, do not touch `CONTEXT.md` beyond what's already there, do not implement or remove the `example` module.** Report to the user:
 
-Define:
-- modules (bounded contexts) and each one's responsibility
-- entities, value objects, and invariants
-- main flows (endpoints)
-- which module to implement first (the domain's most central one)
+- placeholders used (project name, slug, db name, description)
+- typecheck / lint / unit / integration results (test counts)
+- any adjustments the kit needed, if it needed any
+- pending items (missing Docker, plugins not installed, GitHub remote)
 
-Deliverables:
-1. Filled-in `CONTEXT.md`: replace the example lines, keep the sections. The lines marked "(example)" from the `example` module go away in step 8.
-2. Spec at `docs/superpowers/specs/YYYY-MM-DD-initial-domain-design.md` with: context, modules, entities/VOs/invariants, endpoints, **Assumptions** (decisions made without confirmation), out of scope.
-3. `prompts/00-estrutura-arquitetural.md`: **Prompt** section = the exact text that started this bootstrap (replace the whole block with what the user sent); **Result** section = what's been generated so far (finish it in step 9).
-4. `prompts/01-initial-domain.md` in the same format, recording the domain brainstorming.
-5. `PROMPTS.md`: add the 01 line to the index.
-6. Commit: `docs: domain model and initial spec`.
+Then wait. Two ways forward, and you don't choose between them — the user does:
 
-Reference of a real filled-in project: `$KIT/reference/reference-project/` (`CONTEXT.md`, specs in `docs/`, `prompts/`).
+- **They already know what to build first.** They'll tell you in their next message. Build it the normal way: `session-start` → (`superpowers:brainstorming` if the decision is non-trivial) → `writing-plans` → `tdd-agent` → `observability-enforcer` → `arch-reviewer` → PR. Use the "Building the first module" reference below for the module's shape and for removing `example` once it's replaced.
+- **They haven't said yet.** Don't guess and start building. If `superpowers:brainstorming` shows up among your available skills, offer to run it now to plan the domain together (module boundaries, entities, invariants) before any code — using the scope they gave you in `BOOTSTRAP.md` Step A as the starting point. If that plugin isn't installed, just ask them what to build first.
 
-## Step 8 — First real module, and removing `example`
+Work **incrementally** either way: one module, or one slice of behavior, per cycle — never the whole domain in one shot.
 
-Implement **only the first module** now (the rest follow the normal feature flow, one per branch). Mirror `src/modules/example/`: same folders, patterns, and test types. Reference files as needed:
+If the user's very first prompt already included a full domain description, feature list, and instructions to build everything now — treat that as the answer to "they already know what to build first" above, and proceed feature by feature (still one slice at a time, still through the normal TDD/review flow), not as a license to skip straight to a giant single commit.
+
+---
+
+## Building the first module (reference — use when the user asks for it, not automatically)
+
+Mirror `src/modules/example/`: same folders, patterns, and test types. Reference files as needed:
 
 | Need | Copy the pattern from |
 |---|---|
@@ -119,6 +113,16 @@ Implement **only the first module** now (the rest follow the normal feature flow
 | HTTP test (status, schema, 400 for extra field) | `infra/http/item-controller.integration-spec.ts` (`app.inject`) |
 | Business id in logs | `addToContext` in `use-cases/create-item/create-item.ts` |
 | Wiring | `container.ts` |
+
+Deliverables once the domain is modeled (via `superpowers:brainstorming` or the user's own direction):
+1. Filled-in `CONTEXT.md`: replace the example lines, keep the sections. The lines marked "(example)" from the `example` module go away once it's removed (below).
+2. Spec at `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` with: context, modules, entities/VOs/invariants, endpoints, out of scope.
+3. `prompts/00-estrutura-arquitetural.md`: **Prompt** section = the exact text that started the bootstrap (replace the whole block with what the user sent); **Result** section = what's been generated so far.
+4. `prompts/01-<topic>.md` in the same format, recording the domain brainstorming.
+5. `PROMPTS.md`: add the 01 line to the index.
+6. Commit: `docs: domain model and initial spec`.
+
+Reference of a real filled-in project: `$KIT/reference/reference-project/` (`CONTEXT.md`, specs in `docs/`, `prompts/`).
 
 New module checklist:
 - [ ] Model in `prisma/schema.prisma` (domain enum as `String`)
@@ -156,18 +160,7 @@ Review before commit:
 - If Claude Code was opened in the project's folder (project agents/skills loaded): run the `arch-reviewer` agent over `src/modules/<module>/` and the `observability-enforcer` skill.
 - Otherwise (e.g. a subagent working in a different folder): read the project's `.claude/agents/arch-reviewer.md` and `.claude/skills/observability-enforcer/SKILL.md` and apply their checklists by hand over the module, reporting in the format they define.
 
-With no remote, don't merge into `main` on your own: leave the branch ready and report it in step 9 (the normal flow is a PR).
-
-## Step 9 — Hand off to the user
-
-Report:
-- placeholders used
-- `prompts/00-estrutura-arquitetural.md`'s **Result** section, completed with what happened in steps 8–9
-- typecheck / lint / unit / integration results (test counts)
-- assumptions recorded in the spec (autonomous mode)
-- any adjustments the kit needed (if any)
-- pending items (missing Docker, plugins not installed, GitHub remote)
-- next step: a new session starts with the `session-start` skill; subsequent modules follow the normal feature flow (branch → brainstorming → plan → TDD → review → PR)
+With no remote, don't merge into `main` on your own: leave the branch ready and tell the user (the normal flow is a PR).
 
 ---
 
