@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# build → (unit ∥ integration) → coverage, same shape as the TS kit's CI —
+# just `go` commands instead of `npm` ones.
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: go build ./...
+      - run: go vet ./...
+      - run: test -z "$(gofmt -l .)"
+
+  unit-tests:
+    name: Unit Tests
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: go test ./...
+
+  integration-tests:
+    name: Integration Tests
+    needs: build
+    runs-on: ubuntu-latest
+    services:
+      postgres-test:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: {{project_db}}_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5433/{{project_db}}_test?sslmode=disable
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5433/{{project_db}}_test?sslmode=disable
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: go run ./cmd/migrate up
+      - run: go test -tags=integration ./...
+
+  coverage:
+    name: Coverage
+    needs: [unit-tests, integration-tests]
+    runs-on: ubuntu-latest
+    services:
+      postgres-test:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: {{project_db}}_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5433/{{project_db}}_test?sslmode=disable
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5433/{{project_db}}_test?sslmode=disable
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: go run ./cmd/migrate up
+      - name: Run all tests with coverage over internal/modules/... (threshold 80%)
+        run: |
+          PKGS=$(go list ./internal/modules/... | grep -v /sqlcgen)
+          COVERPKG=$(echo "$PKGS" | tr '\n' ',' | sed 's/,$//')
+          go test -tags=integration -coverpkg="$COVERPKG" -coverprofile=coverage.out $PKGS
+          chmod +x scripts/check-coverage.sh
+          ./scripts/check-coverage.sh 80 coverage.out

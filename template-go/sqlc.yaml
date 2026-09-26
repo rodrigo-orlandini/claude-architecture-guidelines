@@ -1,0 +1,15 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "db/queries/example"
+    schema: "db/schema/example"
+    gen:
+      go:
+        package: "sqlcgen"
+        out: "internal/modules/example/adapters/postgres/sqlcgen"
+        sql_package: "pgx/v5"
+        emit_json_tags: false
+        emit_interface: true
+# Adding a module: append another entry above (queries/schema/out per module),
+# or add a second top-level `sql:` list item. Each module keeps its own
+# generated package — never share sqlcgen output across modules.

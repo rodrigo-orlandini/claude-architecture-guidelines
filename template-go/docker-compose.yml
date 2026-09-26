@@ -1,0 +1,44 @@
+name: {{project-slug}}
+
+services:
+  app:
+    container_name: {{project-slug}}-app
+    build:
+      context: .
+      target: dev
+    volumes:
+      - .:/app
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@{{project-slug}}-postgres:5432/{{project_db}}_dev?sslmode=disable
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    container_name: {{project-slug}}-postgres
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: {{project_db}}_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-data:
+
+# No Redis by default — the example module doesn't cache anything. A module
+# that needs a cache adds its own `redis` service here plus a go-redis client
+# in internal/platform, the same way the TS kit's shared docker-compose grew
+# Redis alongside a real need for it.
