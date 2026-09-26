@@ -57,7 +57,22 @@ npm install
 npx prisma generate
 ```
 
-## Step 5 — Validate the template (before changing anything)
+## Step 5 — Observability opt-out (skip this step entirely if the user wants it)
+
+If the user answered "no" to the observability question in `BOOTSTRAP.md` Step A, remove the telemetry layer now, before validating. Structured logging + correlationId stay; only tracing/metrics/Grafana go:
+
+1. Delete `src/shared/observability/tracer.ts` and `src/shared/observability/metrics.ts`.
+2. Delete `docker-compose.observability.yml`, `grafana/`, `prometheus.yml`.
+3. `src/infra/http/server.ts`: remove the `tracer`/`otelContext`/`metrics`/`register` imports and their use in the `onRequest`/`onResponse` hooks and the `GET /metrics` route. Keep `enterContext(...)`, the `x-correlation-id` header logic, and `GET /health`.
+4. `src/main.ts`: remove the `initTracer`/`shutdownTracer` import and calls.
+5. Every use-case in `src/modules/*/use-cases/**` that imports `@shared/observability/metrics` or `@shared/observability/tracer`: remove those imports and the `metrics.*.inc()` / `tracer.startSpan(...)` calls, keep the `getLogger()` calls (logging stays).
+6. `package.json`: remove the `@opentelemetry/*` and `prom-client` dependencies; run `npm install` again.
+7. `CONTEXT.md`: set "Observability" under "Optional Layers Enabled" (add that heading if this template predates it) to "declined at bootstrap".
+8. `CLAUDE.md` / `docs/architecture.md`: if their "Observability" sections don't already say "if declined, these don't exist", no need to add it — just make sure the files match what's actually there.
+
+If the user wants it enabled: do nothing here, skip straight to Step 6.
+
+## Step 6 — Validate the template (before changing anything)
 
 ```bash
 npm run typecheck        # code + specs
@@ -68,7 +83,7 @@ npm run test:integration # needs Docker: brings up docker-compose.test.yml, recr
 
 All of these must pass. If something fails because of a kit defect, fix it in the project and **tell the user** which kit file needed the adjustment.
 
-## Step 6 — Initial commit
+## Step 7 — Initial commit
 
 ```bash
 git init -b main          # if not already a repository
@@ -78,11 +93,12 @@ git commit -m "chore: bootstrap modular monolith architecture"
 
 Don't push or create a remote repository unless the user asks (`SETUP.md` §5).
 
-## Step 7 — Hand off (stop here)
+## Step 8 — Hand off (stop here)
 
 The scaffold is ready. **Do not model the domain, do not touch `CONTEXT.md` beyond what's already there, do not implement or remove the `example` module.** Report to the user:
 
 - placeholders used (project name, slug, db name, description)
+- observability decision (enabled / declined) and what that changed
 - typecheck / lint / unit / integration results (test counts)
 - any adjustments the kit needed, if it needed any
 - pending items (missing Docker, plugins not installed, GitHub remote)
@@ -91,6 +107,8 @@ Then wait. Two ways forward, and you don't choose between them — the user does
 
 - **They already know what to build first.** They'll tell you in their next message. Build it the normal way: `session-start` → (`superpowers:brainstorming` if the decision is non-trivial) → `writing-plans` → `tdd-agent` → `observability-enforcer` → `arch-reviewer` → PR. Use the "Building the first module" reference below for the module's shape and for removing `example` once it's replaced.
 - **They haven't said yet.** Don't guess and start building. If `superpowers:brainstorming` shows up among your available skills, offer to run it now to plan the domain together (module boundaries, entities, invariants) before any code — using the scope they gave you in `BOOTSTRAP.md` Step A as the starting point. If that plugin isn't installed, just ask them what to build first.
+
+Work **incrementally** either way, and the same "ask before adding" rule applies to a cache, a queue, or an outbox pattern as it did to observability above — see `CLAUDE.md`, "Scope discipline".
 
 Work **incrementally** either way: one module, or one slice of behavior, per cycle — never the whole domain in one shot.
 

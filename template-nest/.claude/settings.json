@@ -1,0 +1,14 @@
+{
+  "extraKnownMarketplaces": {
+    "clean-architecture-skills": {
+      "source": {
+        "source": "github",
+        "repo": "nathankim0/clean-architecture-skills"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true,
+    "clean-architecture@clean-architecture-skills": true
+  }
+}

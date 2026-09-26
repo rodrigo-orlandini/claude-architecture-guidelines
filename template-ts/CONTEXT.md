@@ -28,3 +28,11 @@ Referenced by the `domain-modeler`, `tdd`, `session-start`, and `improve-codebas
 - Item requires a non-empty name with a maximum of 120 characters (example)
 - Item is born ACTIVE; only transitions ACTIVE → ARCHIVED; ARCHIVED is terminal (example)
 - <rule that can never be violated>
+
+## Optional Layers Enabled
+
+Track here which opt-in layers (see `CLAUDE.md`, "Scope discipline") this project actually turned on, so it's not buried in chat history:
+
+- Observability (tracing/metrics/Grafana): <enabled at bootstrap | declined at bootstrap | enabled later on <date>, for <reason>>
+- Cache: <not in use | added on <date> for <module>, because <reason>>
+- Queue / async processing: <not in use | added on <date> for <module>, because <reason>>
