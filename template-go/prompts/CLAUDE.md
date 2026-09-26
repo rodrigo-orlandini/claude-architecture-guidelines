@@ -1,27 +1,28 @@
 # Prompts
 
-Registro dos prompts utilizados ao longo do projeto. Cada arquivo documenta um prompt relevante com contexto, critério de direcionamento e avaliação crítica do resultado.
+Log of prompts used throughout the project. Each file documents a relevant prompt with context, direction criteria, and a critical assessment of the result.
 
-## Convenção de nomes
+## Naming convention
 
-`NN-nome-do-prompt.md` — sequencial, lowercase, hífens. Exemplo: `00-estrutura-arquitetural.md`.
+`NN-prompt-name.md` — sequential, lowercase, hyphens. Example: `00-estrutura-arquitetural.md`.
 
-## Estrutura de cada arquivo
+## Structure of each file
 
-| Seção | O que registrar |
+| Section | What to record |
 |---|---|
-| **Objetivo** | O que o prompt resolve ou produz |
-| **Contexto** | Onde e por que foi usado |
-| **Prompt** | Texto exato enviado à IA |
-| **Critérios de Direcionamento** | Decisões de engenharia do prompt — por que foi estruturado assim |
-| **Resultado** | O que a IA produziu e avaliação crítica: aproveitado, descartado, revisado |
-| **Revisões** | Iterações e motivo, se houver |
+| **Objective** | What the prompt solves or produces |
+| **Context** | Where and why it was used |
+| **Prompt** | Exact text sent to the AI |
+| **Direction Criteria** | Engineering decisions behind the prompt — why it was structured this way |
+| **Result** | What the AI produced and a critical assessment: kept, discarded, revised |
+| **Revisions** | Iterations and reason, if any |
 
-## Quando registrar
+## When to record
 
-- Decisões de arquitetura assistidas por IA
-- Geração de modelos, schemas ou stubs de código
-- Consultas que produziram saída aproveitada diretamente no projeto
-- Qualquer prompt onde o direcionamento e a revisão crítica agregaram valor ao resultado
+- AI-assisted architecture decisions
+- Generation of models, schemas, or code stubs
+- Queries that produced output used directly in the project
+- Any prompt where direction and critical review added value to the result
 
-O objetivo não é volume — é rastreabilidade e critério.
+The goal isn't volume — it's traceability and judgment.
+</content>

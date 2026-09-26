@@ -6,7 +6,7 @@ import { registerSharedInfra } from '@shared/container'
 import { registerExampleModule } from '../../container'
 import { buildApp } from '@infra/http/server'
 
-// Rotas HTTP via app.inject (sem porta), com DI real e Postgres de teste.
+// HTTP routes via app.inject (no port), with real DI and a test Postgres.
 describe('ItemController (integration)', () => {
   let app: FastifyInstance
 

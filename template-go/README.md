@@ -2,41 +2,41 @@
 
 {{PROJECT_DESCRIPTION}}
 
-Monolito modular com Clean Architecture em Go — ver [`docs/architecture.md`](./docs/architecture.md).
+Modular monolith with Clean Architecture in Go — see [`docs/architecture.md`](./docs/architecture.md).
 
-## Pré-requisitos
+## Prerequisites
 
 - Go 1.26+
-- Docker + Docker Compose (nativo, ou via WSL no Windows — ver `go run ./scripts/compose -- ...` abaixo)
-- [sqlc](https://docs.sqlc.dev/) — só para regenerar `internal/modules/*/adapters/postgres/sqlcgen` após mudar uma query/schema; não é necessário para rodar ou testar o projeto (o código gerado já vem commitado)
+- Docker + Docker Compose (native, or via WSL on Windows — see `go run ./scripts/compose -- ...` below)
+- [sqlc](https://docs.sqlc.dev/) — only needed to regenerate `internal/modules/*/adapters/postgres/sqlcgen` after changing a query/schema; not required to run or test the project (the generated code is already committed)
 
-## Rodando
+## Running
 
 ```bash
 cp .env.example .env
 go mod download
-go run ./scripts/compose -- up -d postgres     # ou: go run ./scripts/compose -- up -d (também sobe o app em container)
-go run ./cmd/migrate up                        # aplica migrations no banco de dev
-go run ./cmd/api                                # ou: go run ./scripts/compose -- up app
+go run ./scripts/compose -- up -d postgres     # or: go run ./scripts/compose -- up -d (also starts the app in a container)
+go run ./cmd/migrate up                        # applies migrations to the dev database
+go run ./cmd/api                                # or: go run ./scripts/compose -- up app
 ```
 
 - API: http://localhost:8080
 - Health: http://localhost:8080/health
-- Métricas: http://localhost:8080/metrics
+- Metrics: http://localhost:8080/metrics
 
-## Testes
+## Tests
 
 ```bash
 go build ./...
 go vet ./...
-gofmt -l .                              # deve voltar vazio
-go test ./...                           # unit, sem I/O
+gofmt -l .                              # should return empty
+go test ./...                           # unit, no I/O
 go run ./scripts/compose -- -f docker-compose.test.yml up -d --wait
-go run ./cmd/migrate up                 # contra o banco de teste (ver .env.example)
+go run ./cmd/migrate up                 # against the test database (see .env.example)
 go test -tags=integration ./...         # unit + integration
 ```
 
-Coverage combinado com threshold (80% sobre `internal/modules/...`):
+Combined coverage with threshold (80% over `internal/modules/...`):
 
 ```bash
 PKGS=$(go list ./internal/modules/... | grep -v /sqlcgen)
@@ -44,19 +44,20 @@ go test -tags=integration -coverpkg=$(echo $PKGS | tr ' ' ',') -coverprofile=cov
 bash scripts/check-coverage.sh 80 coverage.out
 ```
 
-Ou, com `make` disponível: `make test-integration`, `make test-coverage`.
+Or, with `make` available: `make test-integration`, `make test-coverage`.
 
-## Observabilidade
+## Observability
 
 ```bash
 go run ./scripts/compose -- -f docker-compose.observability.yml up -d
 ```
 
-Grafana em http://localhost:3001 (Prometheus, Loki e Tempo provisionados).
+Grafana at http://localhost:3001 (Prometheus, Loki, and Tempo provisioned).
 
-## Documentação
+## Documentation
 
-- [`CONTEXT.md`](./CONTEXT.md) — glossário de domínio
-- [`docs/architecture.md`](./docs/architecture.md) — arquitetura e fluxo de desenvolvimento
-- [`docs/architecture-rules.md`](./docs/architecture-rules.md) — regras de revisão
-- [`PROMPTS.md`](./PROMPTS.md) — prompts de IA usados no desenvolvimento
+- [`CONTEXT.md`](./CONTEXT.md) — domain glossary
+- [`docs/architecture.md`](./docs/architecture.md) — architecture and development flow
+- [`docs/architecture-rules.md`](./docs/architecture-rules.md) — review rules
+- [`PROMPTS.md`](./PROMPTS.md) — AI prompts used during development
+</content>

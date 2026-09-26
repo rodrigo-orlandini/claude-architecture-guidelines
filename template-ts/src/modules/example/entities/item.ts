@@ -18,7 +18,7 @@ export class Item {
     this.id = id
   }
 
-  // VOs chegam já validados; a entity só guarda invariantes estruturais.
+  // VOs arrive already validated; the entity only holds structural invariants.
   static create(
     props: { name: ItemName; status?: ItemStatus; createdAt?: Date },
     id?: string,
@@ -37,7 +37,7 @@ export class Item {
   get status(): string { return this.props.status.value }
   get createdAt(): Date { return this.props.createdAt }
 
-  // Comportamento de domínio delega a regra de transição ao VO.
+  // Domain behavior delegates the transition rule to the VO.
   archive(): Either<InvalidItemStatusTransitionError, Item> {
     const next = this.props.status.transitionTo('ARCHIVED')
     if (next.isFailure()) return left(next.value)

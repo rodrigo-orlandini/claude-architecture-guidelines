@@ -2,9 +2,9 @@ import { container } from 'tsyringe'
 import type { IItemRepository } from './repositories/item-repository'
 import { PrismaItemRepository } from './infra/persistence/prisma-item-repository'
 
-// Único lugar do módulo que liga interface (token string) → implementação.
-// Classes com @injectable() + @inject() são resolvidas automaticamente;
-// use useValue/useFactory só quando a implementação precisa de argumento não injetável.
+// The only place in the module that wires an interface (string token) → implementation.
+// Classes with @injectable() + @inject() are resolved automatically;
+// use useValue/useFactory only when the implementation needs a non-injectable argument.
 export function registerExampleModule(): void {
   container.registerSingleton<IItemRepository>('IItemRepository', PrismaItemRepository)
 }

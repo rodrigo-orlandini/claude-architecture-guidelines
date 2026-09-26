@@ -17,8 +17,8 @@ export async function buildApp(): Promise<FastifyInstance> {
     logger: {
       level: process.env.LOG_LEVEL ?? 'info',
     },
-    // Fastify 4 usa removeAdditional: true por padrão — campo extra seria descartado em silêncio.
-    // Desligado para que `additionalProperties: false` responda 400.
+    // Fastify 4 uses removeAdditional: true by default — an extra field would be silently discarded.
+    // Turned off so that `additionalProperties: false` responds with 400.
     ajv: { customOptions: { removeAdditional: false } },
   })
 
@@ -28,13 +28,13 @@ export async function buildApp(): Promise<FastifyInstance> {
         title: '{{PROJECT_NAME}} API',
         version: '1.0.0',
       },
-      tags: [{ name: 'Items', description: 'Módulo de exemplo' }],
+      tags: [{ name: 'Items', description: 'Example module' }],
     },
   })
 
   await app.register(swaggerUi, { routePrefix: '/docs' })
 
-  // correlationId + contexto ALS + span raiz por request
+  // correlationId + ALS context + root span per request
   app.addHook('onRequest', (request: FastifyRequest, reply: FastifyReply, done: () => void) => {
     const correlationId =
       (request.headers['x-correlation-id'] as string | undefined) ?? request.id
@@ -80,7 +80,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     return register.metrics()
   })
 
-  // Um controller por recurso; cada um registra suas rotas.
+  // One controller per resource; each registers its own routes.
   await container.resolve(ItemController).registerRoutes(app)
 
   return app

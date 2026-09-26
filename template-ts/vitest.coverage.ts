@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitest/config'
 import { resolve } from 'path'
 
-// Unit + integration juntos com coverage combinado (job "coverage" do CI). Threshold global 80%.
+// Unit + integration together with combined coverage (CI "coverage" job). Global threshold 80%.
 export default defineConfig({
   test: {
     globals: true,

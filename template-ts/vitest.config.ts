@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitest/config'
 import { resolve } from 'path'
 
-// Unit: sem I/O. Infra (Prisma, HTTP, filas) fica fora do coverage unitário e é medida em vitest.coverage.ts.
+// Unit: no I/O. Infra (Prisma, HTTP, queues) is excluded from unit coverage and measured in vitest.coverage.ts.
 export default defineConfig({
   test: {
     globals: true,

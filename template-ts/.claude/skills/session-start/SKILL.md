@@ -1,48 +1,48 @@
 ---
 name: session-start
-description: Onboarding de sessão {{PROJECT_NAME}}. Carrega contexto do projeto, mostra estado atual e direciona para skill/agente correto. Invoque no início de toda sessão nova.
+description: {{PROJECT_NAME}} session onboarding. Loads project context, shows current state, and directs to the right skill/agent. Invoke at the start of every new session.
 ---
 
 # Session Start — {{PROJECT_NAME}}
 
-## O que fazer
+## What to do
 
-1. Leia `CONTEXT.md` — glossário de domínio
-2. Leia `src/shared/core/architecture-rules.md` — regras de arquitetura
-3. Leia `docs/architecture.md` — design da estrutura
-4. Liste specs e planos recentes em `docs/superpowers/specs/` e `docs/superpowers/plans/`
-5. Liste módulos existentes em `src/modules/` e seus use-cases
-6. Rode `git status` e `git log --oneline -5`
-7. Mostre estado resumido ao usuário
+1. Read `CONTEXT.md` — domain glossary
+2. Read `src/shared/core/architecture-rules.md` — architecture rules
+3. Read `docs/architecture.md` — structure design
+4. List recent specs and plans in `docs/superpowers/specs/` and `docs/superpowers/plans/`
+5. List existing modules in `src/modules/` and their use-cases
+6. Run `git status` and `git log --oneline -5`
+7. Show a summarized state to the user
 
-## Saída esperada
+## Expected output
 
 ```
-## Sessão {{PROJECT_NAME}} iniciada
+## {{PROJECT_NAME}} session started
 
-**Branch:** <branch atual>
-**Módulos:**
-- <módulo>: [use-cases existentes ou "vazio"]
+**Branch:** <current branch>
+**Modules:**
+- <module>: [existing use-cases or "empty"]
 
 **Shared core:** either.ts ✅ | use-case.ts ✅ | domain-error.ts ✅ | observability ✅
 
-**Último spec/plano:** <arquivo>
+**Latest spec/plan:** <file>
 
-**Qual tarefa vamos executar hoje?**
+**What task are we working on today?**
 ```
 
-## Direcionamento por tipo de tarefa
+## Routing by task type
 
-| Tarefa declarada | Skill/agente |
+| Declared task | Skill/agent |
 |---|---|
-| Nova feature complexa / decisão arquitetural | `superpowers:brainstorming` → spec → `superpowers:writing-plans` |
-| Executar plano aprovado | `superpowers:subagent-driven-development` |
-| Modelar entity, VO ou definir invariantes | `/domain-modeler` |
-| Implementar use-case, entity, repository | Agente `tdd-agent` |
-| Bug / falha de teste | `superpowers:systematic-debugging` |
-| Verificar observabilidade | `/observability-enforcer` |
-| Revisar diff antes do commit | Agente `arch-reviewer` |
-| Antes de fechar qualquer tarefa | `superpowers:verification-before-completion` |
-| Finalizar branch / abrir PR | `superpowers:finishing-a-development-branch` |
+| Complex new feature / architectural decision | `superpowers:brainstorming` → spec → `superpowers:writing-plans` |
+| Execute an approved plan | `superpowers:subagent-driven-development` |
+| Model an entity, VO, or define invariants | `/domain-modeler` |
+| Implement use-case, entity, repository | `tdd-agent` agent |
+| Bug / test failure | `superpowers:systematic-debugging` |
+| Check observability | `/observability-enforcer` |
+| Review diff before committing | `arch-reviewer` agent |
+| Before closing any task | `superpowers:verification-before-completion` |
+| Finish branch / open PR | `superpowers:finishing-a-development-branch` |
 
-Lembrete: toda tarefa nova começa em branch nova a partir de `origin/main` e termina em PR.
+Reminder: every new task starts on a new branch from `origin/main` and ends in a PR.

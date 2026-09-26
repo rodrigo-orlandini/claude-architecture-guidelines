@@ -1,14 +1,14 @@
-# BOOTSTRAP — escolha a stack
+# BOOTSTRAP — choose the stack
 
-Este kit tem uma variante por stack. Este arquivo só decide qual seguir; o roteiro executável está no arquivo específico.
+This kit has one variant per stack. This file only decides which one to follow; the executable playbook lives in the stack-specific file.
 
-- **TypeScript** (Fastify + tsyringe + Prisma + Vitest): siga [`BOOTSTRAP-TS.md`](./BOOTSTRAP-TS.md)
-- **Go** (net/http nativo + sqlc + pgx): siga [`BOOTSTRAP-GO.md`](./BOOTSTRAP-GO.md)
+- **TypeScript** (Fastify + tsyringe + Prisma + Vitest): follow [`BOOTSTRAP-TS.md`](./BOOTSTRAP-TS.md)
+- **Go** (native net/http + sqlc + pgx): follow [`BOOTSTRAP-GO.md`](./BOOTSTRAP-GO.md)
 
-Se o usuário já disse a stack (no prompt, ou porque o projeto de destino já tem `go.mod`/`package.json`), vá direto para o arquivo correspondente sem perguntar. Se não disse e não há como inferir, pergunte antes de prosseguir — as duas variantes têm scaffolds e comandos de validação completamente diferentes, então escolher errado significa refazer o trabalho.
+If the user already stated the stack (in the prompt, or because the destination project already has a `go.mod`/`package.json`), go straight to the matching file without asking. If they didn't say and there's no way to infer it, ask before proceeding — the two variants have completely different scaffolds and validation commands, so picking the wrong one means redoing the work.
 
-Ambas as variantes compartilham:
-- `SETUP.md` — pré-requisitos e configuração da máquina/Claude Code (seções marcadas **[TS]** ou **[Go]** onde divergem)
-- Os mesmos princípios de arquitetura (monolito modular, regra de dependência, TDD, observabilidade desde o início) e o mesmo fluxo de sessão (`session-start` → `brainstorming` → `writing-plans` → `tdd-agent` → `observability-enforcer` → `arch-reviewer` → PR) — só o mecanismo idiomático de cada camada muda
+Both variants share:
+- `SETUP.md` — machine/Claude Code prerequisites and setup (sections marked **[TS]** or **[Go]** where they diverge)
+- The same architecture principles (modular monolith, dependency rule, TDD, observability from day one) and the same session flow (`session-start` → `brainstorming` → `writing-plans` → `tdd-agent` → `observability-enforcer` → `arch-reviewer` → PR) — only each layer's idiomatic mechanism changes
 
-Uma nova stack (Python, outra) é uma nova pasta `template-<stack>/` + `BOOTSTRAP-<STACK>.md`, seguindo a mesma forma: mesmos princípios de `docs/architecture.md`/`docs/architecture-rules.md`, mecanismo idiomático da linguagem nova.
+A new stack (Python, or another) is a new `template-<stack>/` folder + `BOOTSTRAP-<STACK>.md`, following the same shape: same `docs/architecture.md`/`docs/architecture-rules.md` principles, the new language's own idiomatic mechanism.

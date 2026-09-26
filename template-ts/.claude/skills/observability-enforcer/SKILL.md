@@ -1,45 +1,45 @@
 ---
 name: observability-enforcer
-description: Checklist de observabilidade {{PROJECT_NAME}}. Execute antes de fechar qualquer use-case ou controller. Verifica correlationId, métricas, spans e ausência de console.log.
+description: {{PROJECT_NAME}} observability checklist. Run before closing any use-case or controller. Checks correlationId, metrics, spans, and absence of console.log.
 ---
 
 # Observability Enforcer — {{PROJECT_NAME}}
 
-Checklist executado sobre o arquivo ou módulo indicado. Reporte apenas itens faltando.
+Checklist run over the indicated file or module. Report only missing items.
 
 ## Checklist
 
-### Logger estruturado
-- [ ] `console.log` ausente em todo arquivo analisado (exceção: erro fatal de bootstrap em `src/main.ts`)
-- [ ] Logs de use-case/infra via `getLogger()` de `@shared/observability/logger` (injeta `correlationId`, `traceId`, `spanId` automaticamente)
-- [ ] Logs de controller via `request.log` com `correlationId: request.correlationId`
-- [ ] IDs de negócio relevantes (ex: `orderId`, `userId`) presentes nos logs do fluxo — chamar `addToContext({ orderId })` de `@shared/observability/context` assim que o id existir; todo `getLogger()` seguinte o inclui
+### Structured logger
+- [ ] `console.log` absent from every analyzed file (exception: fatal bootstrap error in `src/main.ts`)
+- [ ] Use-case/infra logs via `getLogger()` from `@shared/observability/logger` (automatically injects `correlationId`, `traceId`, `spanId`)
+- [ ] Controller logs via `request.log` with `correlationId: request.correlationId`
+- [ ] Relevant business IDs (e.g. `orderId`, `userId`) present in the flow's logs — call `addToContext({ orderId })` from `@shared/observability/context` as soon as the id exists; every subsequent `getLogger()` includes it
 
-### Métricas (`@shared/observability/metrics`)
-- [ ] Toda operação de negócio relevante tem Counter (`<dominio>_<evento>_total`)
-- [ ] Falhas têm Counter com label de motivo (`{ reason }` ou `{ permanent }`)
-- [ ] Operações com latência relevante (I/O, cache, jobs) têm Histogram (`<dominio>_<op>_duration_ms`)
-- [ ] Cache (se houver): hit / miss instrumentados
+### Metrics (`@shared/observability/metrics`)
+- [ ] Every relevant business operation has a Counter (`<domain>_<event>_total`)
+- [ ] Failures have a Counter with a reason label (`{ reason }` or `{ permanent }`)
+- [ ] Operations with relevant latency (I/O, cache, jobs) have a Histogram (`<domain>_<op>_duration_ms`)
+- [ ] Cache (if any): hit / miss instrumented
 
 ### Tracing (`@shared/observability/tracer`)
-- [ ] Span raiz `http.request` já é criado pelo hook do server — não duplicar
-- [ ] Span filho em rotas/use-cases críticos com IDs de negócio como atributo (`<entidade>.id`)
-- [ ] Span propagado para chamadas externas (HTTP, fila, adapter)
-- [ ] `span.end()` em `finally`; `setStatus({ code: SpanStatusCode.ERROR })` em falha
+- [ ] Root span `http.request` is already created by the server hook — do not duplicate
+- [ ] Child span in critical routes/use-cases with business IDs as attributes (`<entity>.id`)
+- [ ] Span propagated to external calls (HTTP, queue, adapter)
+- [ ] `span.end()` in `finally`; `setStatus({ code: SpanStatusCode.ERROR })` on failure
 
-### Campos obrigatórios em logs de erro
-- [ ] `error.code` presente (código do DomainError)
-- [ ] `error.message` presente
-- [ ] `correlationId` presente
-- [ ] Stack trace NÃO exposto ao cliente (apenas no log interno)
+### Mandatory fields in error logs
+- [ ] `error.code` present (DomainError code)
+- [ ] `error.message` present
+- [ ] `correlationId` present
+- [ ] Stack trace NOT exposed to the client (internal log only)
 
-## Formato de saída
+## Output format
 
 ```
-✅ correlationId propagado
-✅ logger pino em uso
-❌ métrica de falha ausente em create-order.ts
-❌ span ausente em order-controller.ts
+✅ correlationId propagated
+✅ pino logger in use
+❌ failure metric missing in create-order.ts
+❌ span missing in order-controller.ts
 ```
 
-Items ausentes bloqueiam a tarefa — adicione antes de seguir para arch-reviewer.
+Missing items block the task — add them before moving on to arch-reviewer.

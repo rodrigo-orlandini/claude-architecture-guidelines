@@ -1,121 +1,121 @@
 # Claude Architecture Guidelines
 
-Kit portátil que aplica, em qualquer projeto novo, a mesma arquitetura e o mesmo fluxo de desenvolvimento assistido por IA — em vez de reconstruir tudo à mão a cada vez, ou copiar e colar pedaços soltos de um projeto antigo.
+Portable kit that applies the same architecture and the same AI-assisted development workflow to any new project — instead of rebuilding everything by hand each time, or copy-pasting loose pieces from an old project.
 
-## A ideia
+## The idea
 
-Depois de montar um monolito modular com Clean Architecture num projeto real (CaseCellShop, TypeScript), mais o conjunto de skills/agentes do Claude Code que sustentam esse padrão em cada sessão (revisão de arquitetura, TDD guiado, checklist de observabilidade), ficou claro que valia a pena extrair isso como kit reutilizável em vez de reconstruir do zero no próximo projeto.
+After building a modular monolith with Clean Architecture on a real project (the reference project, TypeScript), plus the set of Claude Code skills/agents that uphold that pattern in every session (architecture review, guided TDD, an observability checklist), it became clear it was worth extracting this as a reusable kit instead of rebuilding it from scratch on the next project.
 
-Este repositório é esse kit. Ele empacota três coisas:
+This repository is that kit. It packages three things:
 
-1. **Um scaffold de código completo e validado** — não um esqueleto vazio: um módulo de exemplo funcional (entity, value objects, use-cases, repository, HTTP, testes unitários e de integração) que serve de referência para copiar o padrão ao construir o módulo real.
-2. **As regras de arquitetura escritas** (`docs/architecture-rules.md`) — o que é permitido, o que não é, e por quê — para que um agente de IA (ou uma pessoa nova no time) não precise adivinhar.
-3. **Skills e agentes do Claude Code** que fazem cumprir essas regras durante o desenvolvimento: `session-start` (onboarding), `domain-modeler` (modelagem antes de codar), `tdd-agent` (loop red-green-refactor), `observability-enforcer` (checklist antes de fechar tarefa), `arch-reviewer` (revisão de diff).
+1. **A complete, validated code scaffold** — not an empty skeleton: a working example module (entity, value objects, use cases, repository, HTTP, unit and integration tests) that serves as the reference pattern to copy when building the real module.
+2. **The architecture rules, written down** (`docs/architecture-rules.md`) — what's allowed, what isn't, and why — so an AI agent (or a person new to the team) doesn't have to guess.
+3. **Claude Code skills and agents** that enforce those rules during development: `session-start` (onboarding), `domain-modeler` (modeling before coding), `tdd-agent` (red-green-refactor loop), `observability-enforcer` (checklist before closing a task), `arch-reviewer` (diff review).
 
-Duas variantes de stack hoje, mesmos princípios, mecanismo idiomático de cada linguagem:
+Two stack variants today, same principles, each language's own idiomatic mechanism:
 
 | | TypeScript (`template-ts/`) | Go (`template-go/`) |
 |---|---|---|
-| HTTP | Fastify | `net/http` nativo (`http.ServeMux`, Go 1.22+) |
-| Erros de domínio | `Either<DomainError, T>` | `(T, error)`, erro tipado `*httperr.DomainError` |
-| DI | tsyringe (container) | wiring manual em `module.go` por módulo |
-| Interface de porta | prefixo `I` (`IItemRepository`) | sem prefixo (`ItemRepository`), definida por quem consome |
-| Acesso a dados | Prisma | sqlc (SQL tipado, gerado) + pgx |
-| Testes de integração | `vitest.integration.ts` + sufixo `.integration-spec.ts` | build tag `//go:build integration` + sufixo `_integration_test.go` |
+| HTTP | Fastify | native `net/http` (`http.ServeMux`, Go 1.22+) |
+| Domain errors | `Either<DomainError, T>` | `(T, error)`, typed `*httperr.DomainError` |
+| DI | tsyringe (container) | manual wiring in `module.go` per module |
+| Port interface | `I` prefix (`IItemRepository`) | no prefix (`ItemRepository`), defined by the consumer |
+| Data access | Prisma | sqlc (generated, typed SQL) + pgx |
+| Integration tests | `vitest.integration.ts` + `.integration-spec.ts` suffix | `//go:build integration` build tag + `_integration_test.go` suffix |
 
-Em comum às duas:
-- **Monolito modular + Clean Architecture** — módulo = bounded context, regra de dependência, ports & adapters
-- **Observabilidade desde o dia 1** (correlationId + logger estruturado, métricas Prometheus, OpenTelemetry, stack Grafana)
-- **Docker** (dev / test / observability) e **CI** GitHub Actions com coverage ≥ 80%
-- Fluxo superpowers (brainstorm → spec → plano → execução → revisão → PR) e registro de prompts
+Shared by both:
+- **Modular monolith + Clean Architecture** — module = bounded context, dependency rule, ports & adapters
+- **Observability from day one** (correlationId + structured logger, Prometheus metrics, OpenTelemetry, Grafana stack)
+- **Docker** (dev / test / observability) and **CI** on GitHub Actions with a coverage threshold ≥ 80%
+- A superpowers-driven workflow (brainstorm → spec → plan → execution → review → PR) and prompt logging
 
-Cada variante já foi validada rodando um agente **sem contexto prévio** aplicando o kit numa pasta vazia, construindo um módulo real do zero e rodando a suíte completa (build, lint, unit, integração contra Postgres real) — duas vezes cada, em domínios diferentes.
+Each variant has already been validated by running an agent **with no prior context** applying the kit to an empty folder, building a real module from scratch, and running the full suite (build, lint, unit, integration against a real Postgres) — twice each, on different domains.
 
 ## Quick start
 
-**Pré-requisito único:** [Claude Code](https://docs.claude.com/claude-code) instalado. O resto (Node ou Go, Docker, plugins) o próprio bootstrap confere e te avisa do que falta — mas se quiser adiantar, veja [`SETUP.md`](./SETUP.md).
+**Only prerequisite:** [Claude Code](https://docs.claude.com/claude-code) installed. Everything else (Node or Go, Docker, plugins) is checked by the bootstrap itself, which tells you what's missing — but if you want to get ahead of it, see [`SETUP.md`](./SETUP.md).
 
-1. Clone este repositório em algum lugar fixo da máquina (não precisa ser dentro do projeto novo):
+1. Clone this repository somewhere fixed on your machine (doesn't need to be inside the new project):
 
    ```bash
    git clone https://github.com/rodrigo-orlandini/claude-architecture-guidelines.git ~/claude-architecture-guidelines
    ```
 
-2. Crie a pasta do projeto novo (vazia, ou só com `.git`), abra o Claude Code nela e cole:
+2. Create the new project's folder (empty, or with just `.git`), open Claude Code in it, and paste:
 
    ```
-   Leia ~/claude-architecture-guidelines/BOOTSTRAP.md e siga todos os passos para aplicar a estrutura neste projeto.
-   Stack: TypeScript | Go. Nome do projeto: <Nome Legível>. Domínio: <uma ou duas frases sobre o que o sistema faz>.
+   Read ~/claude-architecture-guidelines/BOOTSTRAP.md and follow every step to apply the structure to this project.
+   Stack: TypeScript | Go. Project name: <Readable Name>. Domain: <one or two sentences about what the system does>.
    ```
 
-3. O agente decide a variante (`BOOTSTRAP-TS.md` ou `BOOTSTRAP-GO.md`), copia o template, substitui os placeholders, instala dependências, valida tudo (build + testes, unit e integração contra Postgres real) e conduz um brainstorming curto pra modelar o domínio inicial.
+3. The agent picks the variant (`BOOTSTRAP-TS.md` or `BOOTSTRAP-GO.md`), copies the template, substitutes the placeholders, installs dependencies, validates everything (build + tests, unit and integration against a real Postgres), and runs a short brainstorming pass to model the initial domain.
 
-4. No final você tem: projeto rodando, CI configurado, primeiro módulo real implementado seguindo TDD, e `CONTEXT.md` preenchido com o glossário do domínio.
+4. At the end you have: the project running, CI configured, the first real module implemented following TDD, and `CONTEXT.md` filled in with the domain glossary.
 
-Sem IA, ou pra entender cada passo antes de rodar: siga `BOOTSTRAP-TS.md`/`BOOTSTRAP-GO.md` manualmente — todo passo é comando comum (`cp`, `sed`, `npm`/`go`, `git`).
+Without AI, or to understand each step before running it: follow `BOOTSTRAP-TS.md`/`BOOTSTRAP-GO.md` manually — every step is an ordinary command (`cp`, `sed`, `npm`/`go`, `git`).
 
-## Conteúdo
+## Contents
 
 ```
 _architecture/
-├── README.md          ← este arquivo
-├── SETUP.md            ← pré-requisitos e configuração da máquina / Claude Code (seções [TS]/[Go] onde divergem)
-├── BOOTSTRAP.md         ← dispatcher: qual stack, qual arquivo seguir
-├── BOOTSTRAP-TS.md       ← roteiro executável, stack TypeScript
-├── BOOTSTRAP-GO.md       ← roteiro executável, stack Go
-├── template-ts/          ← arquivos copiados para a raiz do projeto novo (TypeScript, com placeholders)
+├── README.md          ← this file
+├── SETUP.md            ← machine / Claude Code prerequisites and setup (sections [TS]/[Go] where they diverge)
+├── BOOTSTRAP.md         ← dispatcher: which stack, which file to follow
+├── BOOTSTRAP-TS.md       ← executable playbook, TypeScript stack
+├── BOOTSTRAP-GO.md       ← executable playbook, Go stack
+├── template-ts/          ← files copied into the new project's root (TypeScript, with placeholders)
 │   ├── CLAUDE.md, CONTEXT.md, PROMPTS.md, README.md
 │   ├── .claude/         ← settings.json (plugins), agents/, skills/
 │   ├── docs/            ← architecture.md, adr/, superpowers/{specs,plans}/
-│   ├── prompts/         ← convenção de registro de prompts + prompt 00
-│   ├── src/             ← shared core + observability + infra http + módulo `example` completo
-│   ├── prisma/          ← schema com model de exemplo
+│   ├── prompts/         ← prompt-logging convention + prompt 00
+│   ├── src/             ← shared core + observability + HTTP infra + complete `example` module
+│   ├── prisma/          ← schema with an example model
 │   ├── grafana/, prometheus.yml, docker-compose*.yml, Dockerfile
-│   ├── scripts/compose.mjs  ← `docker compose` portátil (nativo ou via WSL)
+│   ├── scripts/compose.mjs  ← portable `docker compose` (native or via WSL)
 │   ├── .github/workflows/ci.yml
 │   └── package.json, tsconfig*.json, vitest*.ts, .eslintrc.cjs, .env.example, .gitignore
-├── template-go/          ← arquivos copiados para a raiz do projeto novo (Go, com placeholders)
+├── template-go/          ← files copied into the new project's root (Go, with placeholders)
 │   ├── CLAUDE.md, CONTEXT.md, PROMPTS.md, README.md
 │   ├── .claude/         ← settings.json (plugins), agents/, skills/
 │   ├── docs/            ← architecture.md, architecture-rules.md, adr/, superpowers/{specs,plans}/
-│   ├── prompts/         ← convenção de registro de prompts + prompt 00
-│   ├── cmd/api, cmd/migrate  ← bootstrap do processo; migrations via goose (lib, não CLI)
-│   ├── internal/platform/    ← config, db (pgxpool), httpserver (net/http + middlewares), httperr, observability
-│   ├── internal/modules/example/  ← domain, usecase, adapters/{httpapi,postgres} completos
+│   ├── prompts/         ← prompt-logging convention + prompt 00
+│   ├── cmd/api, cmd/migrate  ← process bootstrap; migrations via goose (library, not a CLI)
+│   ├── internal/platform/    ← config, db (pgxpool), httpserver (net/http + middleware), httperr, observability
+│   ├── internal/modules/example/  ← complete domain, usecase, adapters/{httpapi,postgres}
 │   ├── db/{migrations,schema,queries}/, sqlc.yaml
 │   ├── grafana/, prometheus.yml, docker-compose*.yml, Dockerfile
-│   ├── scripts/compose/  ← `docker compose` portátil (nativo ou via WSL), sem depender de Node
+│   ├── scripts/compose/  ← portable `docker compose` (native or via WSL), no Node dependency
 │   ├── .github/workflows/ci.yml
 │   └── go.mod, go.sum, Makefile, .env.example, .gitignore
-└── reference/casecellshop/  ← material original (somente leitura, exemplo real preenchido, stack TypeScript)
+└── reference/reference-project/  ← original material (read-only, a real filled-in example, TypeScript stack)
     ├── CONTEXT.md, PROMPTS.md, CLAUDE.md, architecture-rules.md
-    ├── prompts/     ← prompts reais 00–06 (inclui 00 que criou esta estrutura e 03 de git/CI)
-    ├── docs/        ← specs de design reais + um plano de implementação exemplo
-    ├── sdd-ledger-example/  ← exemplo de ledger do subagent-driven-development
-    ├── claude/      ← .claude/ original (agents, skills, settings)
+    ├── prompts/     ← real prompts 00–06 (including 00, which created this structure, and 03, git/CI)
+    ├── docs/        ← real design specs plus one example implementation plan
+    ├── sdd-ledger-example/  ← an example subagent-driven-development ledger
+    ├── claude/      ← the original .claude/ (agents, skills, settings)
     └── ci-original.yml
 ```
 
-## Placeholders dos templates
+## Template placeholders
 
-| Placeholder | Exemplo | Onde aparece |
+| Placeholder | Example | Where it appears |
 |---|---|---|
-| `{{PROJECT_NAME}}` | `Task Hub` | docs, skills, agentes, título da API, dashboard |
-| `{{project-slug}}` | `task-hub` | nome do pacote/módulo, container names, métricas, tracer |
-| `{{project_db}}` | `task_hub` | nomes de banco Postgres (dev/test), CI |
-| `{{PROJECT_DESCRIPTION}}` | `API para equipes pequenas gerenciarem tarefas.` | README do projeto |
-| `{{module-path}}` **[Go apenas]** | `github.com/acme/task-hub` | `go.mod` e todo import interno |
+| `{{PROJECT_NAME}}` | `Task Hub` | docs, skills, agents, API title, dashboard |
+| `{{project-slug}}` | `task-hub` | package/module name, container names, metrics, tracer |
+| `{{project_db}}` | `task_hub` | Postgres database names (dev/test), CI |
+| `{{PROJECT_DESCRIPTION}}` | `API for small teams to manage tasks.` | the project's README |
+| `{{module-path}}` **[Go only]** | `github.com/acme/task-hub` | `go.mod` and every internal import |
 
-## Princípios que o kit preserva (nas duas stacks)
+## Principles the kit preserves (in both stacks)
 
-1. Módulo = bounded context. Nada cruza módulo sem interface (port).
-2. Domínio não conhece infra. Use-cases retornam erro tipado (`Either` em TS, `(T, error)` em Go); controllers/handlers só fazem match.
-3. Todo wiring centralizado (`container.ts` em TS, `module.go` em Go). Nada de instanciar adapter concreto fora dali.
-4. Teste antes do código, fakes em vez de mocks, integration contra banco real em Docker.
-5. Observabilidade é requisito da tarefa, não melhoria posterior.
-6. Toda feature: spec → plano → TDD → revisão automatizada → verificação → PR.
-7. Decisões e prompts ficam registrados (`docs/superpowers/`, `docs/adr/`, `prompts/`).
+1. Module = bounded context. Nothing crosses a module boundary without an interface (port).
+2. Domain knows nothing about infra. Use cases return a typed error (`Either` in TS, `(T, error)` in Go); controllers/handlers only match on it.
+3. All wiring is centralized (`container.ts` in TS, `module.go` in Go). No instantiating a concrete adapter anywhere else.
+4. Test before code, fakes instead of mocks, integration tests against a real database in Docker.
+5. Observability is a requirement of the task, not a later improvement.
+6. Every feature: spec → plan → TDD → automated review → verification → PR.
+7. Decisions and prompts get recorded (`docs/superpowers/`, `docs/adr/`, `prompts/`).
 
-## Adicionando uma stack nova
+## Adding a new stack
 
-Mesma forma de `template-go/`: pasta `template-<stack>/` com o mesmo módulo de exemplo (VO simples, VO enum com transição, entity com comportamento, create/list/get, mapper, repository real + fake, handler HTTP com teste de rota cobrindo "campo desconhecido no corpo"), `docs/architecture.md` + `docs/architecture-rules.md` adaptados, `.claude/` com os mesmos 4 skills + 2 agentes, e um `BOOTSTRAP-<STACK>.md` novo referenciado pelo dispatcher `BOOTSTRAP.md`. Valide sempre com um agente sem contexto aplicando o kit numa pasta vazia — as duas variantes atuais só chegaram a zero atrito depois de duas rodadas de teste cada.
+Same shape as `template-go/`: a `template-<stack>/` folder with the same example module (simple VO, enum VO with a transition, entity with behavior, create/list/get, mapper, real repository + fake, HTTP handler with a route test covering "unknown field in the body"), an adapted `docs/architecture.md` + `docs/architecture-rules.md`, a `.claude/` with the same 4 skills + 2 agents, and a new `BOOTSTRAP-<STACK>.md` referenced by the `BOOTSTRAP.md` dispatcher. Always validate with a context-free agent applying the kit to an empty folder — both current variants only reached zero friction after two rounds of testing each.

@@ -1,7 +1,7 @@
 import type { Item } from '../entities/item'
 import type { IItemRepository, FindManyParams, FindManyResult } from '../repositories/item-repository'
 
-// Fake compartilhado por mais de um use-case fica em use-cases/; se usado por um só, co-locar na pasta dele.
+// A fake shared by more than one use-case lives in use-cases/; if used by only one, co-locate it in its folder.
 export class InMemoryItemRepository implements IItemRepository {
   items: Item[] = []
 

@@ -1,16 +1,17 @@
-# Prompts de IA
+# AI Prompts
 
-Os prompts utilizados no desenvolvimento do {{PROJECT_NAME}} estão documentados em [`prompts/`](./prompts/).
+The prompts used in developing {{PROJECT_NAME}} are documented in [`prompts/`](./prompts/).
 
-Cada arquivo registra:
-- **Objetivo** — o que o prompt resolve ou produz
-- **Contexto** — onde e por que foi usado
-- **Prompt** — texto exato enviado à IA
-- **Critérios de direcionamento** — decisões de engenharia do prompt
-- **Resultado** — o que foi produzido e avaliação crítica
+Each file records:
+- **Objective** — what the prompt solves or produces
+- **Context** — where and why it was used
+- **Prompt** — exact text sent to the AI
+- **Direction criteria** — engineering decisions behind the prompt
+- **Result** — what was produced and a critical assessment
 
-## Índice
+## Index
 
-| # | Arquivo | Tema |
+| # | File | Topic |
 |---|---|---|
-| 00 | [estrutura-arquitetural](./prompts/00-estrutura-arquitetural.md) | Arquitetura inicial e fluxo de desenvolvimento assistido |
+| 00 | [estrutura-arquitetural](./prompts/00-estrutura-arquitetural.md) | Initial architecture and assisted development flow |
+</content>

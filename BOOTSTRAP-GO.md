@@ -1,45 +1,45 @@
-# BOOTSTRAP-GO — aplicar a estrutura Go em um projeto novo
+# BOOTSTRAP-GO — apply the Go structure to a new project
 
-> Stack Go (net/http nativo + sqlc + pgx + Postgres). Para TypeScript, use `BOOTSTRAP-TS.md`.
+> Go stack (native net/http + sqlc + pgx + Postgres). For TypeScript, use `BOOTSTRAP-TS.md`.
 
-Roteiro executável. Escrito para um agente de IA sem contexto prévio, mas qualquer pessoa pode seguir.
+Executable playbook. Written for an AI agent with no prior context, but anyone can follow it.
 
-- `$KIT` = pasta onde está este arquivo (a pasta `_architecture/` cujo caminho foi passado no prompt).
-- `$DEST` = raiz do projeto novo = diretório de trabalho atual.
+- `$KIT` = the folder this file is in (the `_architecture/` folder whose path was given in the prompt).
+- `$DEST` = the new project's root = the current working directory.
 
-Entradas (pergunte ao usuário se faltarem; em execução autônoma, derive):
-- **Nome legível** → `{{PROJECT_NAME}}` (ex.: `Clinic Booking`)
-- **Slug kebab-case** → `{{project-slug}}` (ex.: `clinic-booking`; derive do nome)
-- **Nome de banco snake_case** → `{{project_db}}` (ex.: `clinic_booking`; slug com `-` trocado por `_`)
-- **Módulo Go** → `{{module-path}}` (ex.: `github.com/acme/clinic-booking`; pergunte a org/conta, ou use `github.com/<usuário-git>/<slug>` se não houver preferência)
-- **Descrição do domínio** (1–3 frases) — usada no passo 7; a primeira frase vira `{{PROJECT_DESCRIPTION}}` (README do projeto)
+Inputs (ask the user if missing; in autonomous execution, derive them):
+- **Readable name** → `{{PROJECT_NAME}}` (e.g. `Clinic Booking`)
+- **kebab-case slug** → `{{project-slug}}` (e.g. `clinic-booking`; derive from the name)
+- **snake_case database name** → `{{project_db}}` (e.g. `clinic_booking`; slug with `-` swapped for `_`)
+- **Go module path** → `{{module-path}}` (e.g. `github.com/acme/clinic-booking`; ask for the org/account, or use `github.com/<git-username>/<slug>` if there's no preference)
+- **Domain description** (1–3 sentences) — used in step 7; the first sentence becomes `{{PROJECT_DESCRIPTION}}` (the project's README)
 
-**Modo autônomo** (ninguém disponível para responder perguntas ou aprovar): em todo ponto que pede resposta/aprovação do usuário, escolha a opção mais simples compatível com a descrição do domínio, registre a decisão numa seção **Premissas** da spec (passo 7) e siga. Nunca invente requisito que a descrição não sugere.
+**Autonomous mode** (no one available to answer questions or approve): at every point that asks for a user response/approval, pick the simplest option compatible with the domain description, record the decision in an **Assumptions** section of the spec (step 7), and proceed. Never invent a requirement the description doesn't suggest.
 
 ---
 
-## Passo 0 — Pré-requisitos
+## Step 0 — Prerequisites
 
-Confira `$KIT/SETUP.md` §1–2. Mínimo: `go version` (≥ 1.26, arquitetura `amd64` — confira com `go env GOARCH`), `git --version`. Docker só é necessário para `go test -tags=integration` e dev em containers; sem ele, build/vet/unit tests continuam funcionando. `sqlc` só é necessário se for mudar schema/query (o código gerado já vem commitado no template).
+Check `$KIT/SETUP.md` §1–2. Minimum: `go version` (≥ 1.26, `amd64` architecture — check with `go env GOARCH`), `git --version`. Docker is only needed for `go test -tags=integration` and containerized dev; without it, build/vet/unit tests still work. `sqlc` is only needed if you're changing a schema/query (the generated code already comes committed in the template).
 
-## Passo 1 — Verificar destino
+## Step 1 — Check the destination
 
-- Se `$DEST` já tem `go.mod`, `internal/` ou `.claude/`, **pare e pergunte** antes de sobrescrever. Este kit é para projeto novo; em projeto existente, faça merge manual arquivo a arquivo.
-- Pasta vazia ou só com `.git`/README: prossiga.
+- If `$DEST` already has `go.mod`, `internal/`, or `.claude/`, **stop and ask** before overwriting. This kit is for a new project; for an existing one, merge file by file manually.
+- Empty folder, or with just `.git`/README: proceed.
 
-## Passo 2 — Copiar o template
+## Step 2 — Copy the template
 
-Copie **todo** o conteúdo de `$KIT/template-go/`, incluindo dotfiles (`.claude/`, `.github/`, `.env.example`, `.gitignore`):
+Copy **all** of `$KIT/template-go/`'s contents, including dotfiles (`.claude/`, `.github/`, `.env.example`, `.gitignore`):
 
 ```bash
 cp -r "$KIT/template-go/." "$DEST/"
 ```
 
-Não copie `$KIT/reference/` nem os `.md` da raiz do kit.
+Don't copy `$KIT/reference/` or the root kit's `.md` files.
 
-## Passo 3 — Substituir placeholders
+## Step 3 — Substitute placeholders
 
-Em todos os arquivos copiados (inclusive `.claude/`, `.github/`, `grafana/`, e **os `.go` — o placeholder vive dentro da string do import path, é sintaticamente válido até ser trocado**). No Windows rode em Git Bash:
+In every copied file (including `.claude/`, `.github/`, `grafana/`, and **the `.go` files — the placeholder lives inside the import path's string literal, it's syntactically valid until it's replaced**). On Windows, run this in Git Bash:
 
 ```bash
 grep -rl --exclude-dir=.git -e '{{module-path}}' -e '{{PROJECT_NAME}}' -e '{{project-slug}}' -e '{{project_db}}' -e '{{PROJECT_DESCRIPTION}}' . \
@@ -47,16 +47,16 @@ grep -rl --exclude-dir=.git -e '{{module-path}}' -e '{{PROJECT_NAME}}' -e '{{pro
                  -e 's/{{PROJECT_NAME}}/Clinic Booking/g' \
                  -e 's/{{project-slug}}/clinic-booking/g' \
                  -e 's/{{project_db}}/clinic_booking/g' \
-                 -e 's/{{PROJECT_DESCRIPTION}}/API de agendamento para clinicas pequenas./g'
+                 -e 's/{{PROJECT_DESCRIPTION}}/API for small clinics to schedule appointments./g'
 ```
 
-Ajuste os valores de exemplo acima para os reais. Se a descrição tiver `/` ou `&`, escape-os no `sed` ou edite `README.md` à mão.
+Adjust the example values above to the real ones. If the description has `/` or `&`, escape them in `sed` or edit `README.md` by hand.
 
-**`{{route}}`** em `grafana/provisioning/dashboards/app.json` (se existir) é sintaxe do Grafana — não é um placeholder do kit, não substitua.
+**`{{route}}`** in `grafana/provisioning/dashboards/app.json` (if present) is Grafana syntax — not a kit placeholder, don't substitute it.
 
-Verifique: `grep -rn '{{PROJECT_NAME}}\|{{project-slug}}\|{{project_db}}\|{{module-path}}\|{{PROJECT_DESCRIPTION}}' .` deve voltar vazio.
+Verify: `grep -rn '{{PROJECT_NAME}}\|{{project-slug}}\|{{project_db}}\|{{module-path}}\|{{PROJECT_DESCRIPTION}}' .` should come back empty.
 
-## Passo 4 — Dependências
+## Step 4 — Dependencies
 
 ```bash
 cp .env.example .env
@@ -64,9 +64,9 @@ go mod download
 go build ./...
 ```
 
-Se `go mod download`/`go build` reclamar de checksum, rode `go mod tidy` uma vez (baixa e resolve tudo de novo com o `{{module-path}}` já substituído) e confira que `go.sum` não mudou de forma inesperada.
+If `go mod download`/`go build` complains about a checksum, run `go mod tidy` once (re-downloads and re-resolves everything with `{{module-path}}` already substituted) and check that `go.sum` didn't change unexpectedly.
 
-## Passo 5 — Validar o template (antes de mudar qualquer coisa)
+## Step 5 — Validate the template (before changing anything)
 
 ```bash
 go build ./...
@@ -75,91 +75,91 @@ test -z "$(gofmt -l .)"
 go test ./...
 ```
 
-Todos devem passar. Com Docker disponível, também:
+All of these must pass. With Docker available, also:
 
 ```bash
 go run ./scripts/compose -- -f docker-compose.test.yml up -d --wait
-go run ./cmd/migrate up          # DATABASE_URL deve apontar pro banco de teste — ver .env.example / TEST_DATABASE_URL
+go run ./cmd/migrate up          # DATABASE_URL must point at the test database — see .env.example / TEST_DATABASE_URL
 go test -tags=integration ./...
 ```
 
-Se algo falhar por defeito do kit, corrija no projeto e **informe o usuário** qual arquivo do kit precisou de ajuste.
+If something fails because of a kit defect, fix it in the project and **tell the user** which kit file needed the adjustment.
 
-## Passo 6 — Commit inicial
+## Step 6 — Initial commit
 
 ```bash
-git init -b main          # se ainda não for repositório
+git init -b main          # if not already a repository
 git add .
 git commit -m "chore: bootstrap modular monolith architecture (go)"
 ```
 
-Não faça push nem crie repositório remoto sem o usuário pedir (`SETUP.md` §5).
+Don't push or create a remote repository unless the user asks (`SETUP.md` §5).
 
-## Passo 7 — Domínio
+## Step 7 — Domain
 
-Com usuário presente: invoque `superpowers:brainstorming` com a descrição do domínio.
-Modo autônomo: não invoque a skill (ela depende de perguntas); faça a versão curta abaixo você mesmo.
+With the user present: invoke `superpowers:brainstorming` with the domain description.
+Autonomous mode: don't invoke the skill (it depends on Q&A); do the short version below yourself.
 
-Defina:
-- módulos (bounded contexts) e a responsabilidade de cada um
-- entidades, value objects e invariantes
-- fluxos principais (endpoints)
-- qual módulo implementar primeiro (o mais central do domínio)
+Define:
+- modules (bounded contexts) and each one's responsibility
+- entities, value objects, and invariants
+- main flows (endpoints)
+- which module to implement first (the domain's most central one)
 
-Entregáveis:
-1. `CONTEXT.md` preenchido: substitua as linhas de exemplo, mantenha as seções. As linhas marcadas "(exemplo)" do módulo `example` saem no passo 8.
-2. Spec em `docs/superpowers/specs/AAAA-MM-DD-dominio-inicial-design.md` com: contexto, módulos, entidades/VOs/invariantes, endpoints, **Premissas** (decisões tomadas sem confirmação), fora de escopo.
-3. `prompts/00-estrutura-arquitetural.md`: seção **Prompt** = texto exato que iniciou este bootstrap; seção **Resultado** = o que foi gerado até aqui (complete no passo 9).
-4. `prompts/01-dominio-inicial.md` no mesmo formato, registrando o brainstorming de domínio.
-5. `PROMPTS.md`: adicione a linha 01 no índice.
+Deliverables:
+1. Filled-in `CONTEXT.md`: replace the example lines, keep the sections. The lines marked "(example)" from the `example` module go away in step 8.
+2. Spec at `docs/superpowers/specs/YYYY-MM-DD-initial-domain-design.md` with: context, modules, entities/VOs/invariants, endpoints, **Assumptions** (decisions made without confirmation), out of scope.
+3. `prompts/00-estrutura-arquitetural.md`: **Prompt** section = the exact text that started this bootstrap; **Result** section = what's been generated so far (finish it in step 9).
+4. `prompts/01-initial-domain.md` in the same format, recording the domain brainstorming.
+5. `PROMPTS.md`: add the 01 line to the index.
 6. Commit: `docs: domain model and initial spec`.
 
-Referência de projeto real preenchido (kit TS, mesmo processo): `$KIT/reference/casecellshop/`.
+Reference of a real filled-in project (TS kit, same process): `$KIT/reference/reference-project/`.
 
-## Passo 8 — Primeiro módulo real e remoção do `example`
+## Step 8 — First real module, and removing `example`
 
-Implemente **só o primeiro módulo** agora (os demais seguem o fluxo normal de feature, um por branch). Comece numa branch: `git switch -c feat/<modulo>` (ainda não há `origin/main`; parta do `main` local).
+Implement **only the first module** now (the rest follow the normal feature flow, one per branch). Start on a branch: `git switch -c feat/<module>` (there's no `origin/main` yet; branch off the local `main`).
 
-Se o módulo central depende de módulos que ainda não existem (ex.: agendamento → paciente), guarde só o id opaco (string, sem FK nem validação) e registre como premissa — ver `docs/architecture-rules.md`, seção "Tratamento de erros".
+If the central module depends on modules that don't exist yet (e.g. appointment → patient), store only the opaque id (string, no FK, no validation) and record it as an assumption — see `docs/architecture-rules.md`, "Error handling" section.
 
-Espelhe `internal/modules/example/`: mesmos pacotes, padrões e tipos de teste. Arquivos de referência por necessidade:
+Mirror `internal/modules/example/`: same packages, patterns, and test types. Reference files as needed:
 
-| Precisa de | Copie o padrão de |
+| Need | Copy the pattern from |
 |---|---|
-| VO simples com validação | `domain/item_name.go` |
-| Enum / máquina de estados | `domain/item_status.go` + `Item.Archive()` em `domain/item.go` |
-| Criação (POST, 201, corpo rejeitando campo desconhecido) | `usecase/create_item.go` + `adapters/httpapi/item_handler.go` (`json.Decoder.DisallowUnknownFields()`) |
-| Leitura por id com 404 | `usecase/get_item.go` + `domain/errors.go` |
-| Listagem paginada | `usecase/list_items.go` |
-| Persistência | `db/schema/example/`, `db/queries/example/`, `sqlc.yaml` (adicione uma entrada), `adapters/postgres/item_repository.go` + `mapper.go` (+ integration test) |
-| Migration | `db/migrations/NNNNN_<nome>.sql` com marcadores `-- +goose Up` / `-- +goose Down` |
-| Wiring | `module.go` (só ele conhece `adapters/httpapi` e `adapters/postgres` ao mesmo tempo) |
-| Teste HTTP (status, DTO, 400 para campo extra) | `adapters/httpapi/item_handler_integration_test.go` (`httptest.NewServer` + wiring real) |
-| Id de negócio nos logs | `observability.AddFields` em `usecase/create_item.go` |
-| Invariante garantida pelo banco sob concorrência | `adapters/postgres/errors.go` (comentário `isUniqueViolation`) |
+| Simple VO with validation | `domain/item_name.go` |
+| Enum / state machine | `domain/item_status.go` + `Item.Archive()` in `domain/item.go` |
+| Creation (POST, 201, body rejecting an unknown field) | `usecase/create_item.go` + `adapters/httpapi/item_handler.go` (`json.Decoder.DisallowUnknownFields()`) |
+| Read by id with 404 | `usecase/get_item.go` + `domain/errors.go` |
+| Paginated listing | `usecase/list_items.go` |
+| Persistence | `db/schema/example/`, `db/queries/example/`, `sqlc.yaml` (add an entry), `adapters/postgres/item_repository.go` + `mapper.go` (+ integration test) |
+| Migration | `db/migrations/NNNNN_<name>.sql` with `-- +goose Up` / `-- +goose Down` markers |
+| Wiring | `module.go` (the only file that knows both `adapters/httpapi` and `adapters/postgres`) |
+| HTTP test (status, DTO, 400 for extra field) | `adapters/httpapi/item_handler_integration_test.go` (`httptest.NewServer` + real wiring) |
+| Business id in logs | `observability.AddFields` in `usecase/create_item.go` |
+| Invariant enforced by the database under concurrency | `adapters/postgres/errors.go` (`isUniqueViolation` comment) |
 
-Depois de escrever schema/queries novos, rode `sqlc generate` (ou `make sqlc`) e commit o resultado em `adapters/postgres/sqlcgen/`.
+After writing new schema/queries, run `sqlc generate` (or `make sqlc`) and commit the result in `adapters/postgres/sqlcgen/`.
 
-Checklist do módulo novo:
-- [ ] Model em `db/schema/<módulo>/` **e** migration correspondente em `db/migrations/` (os dois em sincronia manual)
-- [ ] Códigos de erro novos em `internal/platform/httperr/error.go` (`statusByCode`)
-- [ ] Métricas em `internal/platform/observability/metrics.go` (`<modulo>_*`, registradas no `init()`)
-- [ ] `<módulo>.New(pool)` chamado em `cmd/api/main.go`; rotas registradas via `httpserver.New(...)`
-- [ ] Testes: VO, entity, use-cases (fake in-memory), mapper, repository Postgres (integration), handler HTTP (integration, incluindo o caso de campo desconhecido → 400)
+New module checklist:
+- [ ] Model in `db/schema/<module>/` **and** a matching migration in `db/migrations/` (the two kept in sync by hand)
+- [ ] New error codes in `internal/platform/httperr/error.go` (`statusByCode`)
+- [ ] Metrics in `internal/platform/observability/metrics.go` (`<module>_*`, registered in `init()`)
+- [ ] `<module>.New(pool)` called in `cmd/api/main.go`; routes registered via `httpserver.New(...)`
+- [ ] Tests: VO, entity, use-cases (in-memory fake), mapper, Postgres repository (integration), HTTP handler (integration, including the unknown-field → 400 case)
 
-Remoção do `example` (depois que o módulo novo passar nos testes):
-- [ ] Apague `internal/modules/example/`
-- [ ] `cmd/api/main.go`: remova `example.New(pool)` e o registro das rotas dele
-- [ ] `db/schema/example/`, `db/queries/example/`: apague; `sqlc.yaml`: remova a entrada
-- [ ] `db/migrations/00001_init.sql`: apague (cria a tabela `items`); gere a inicial do schema novo: `go run ./cmd/migrate up` já aplica migrations existentes — para uma migration nova a partir do schema, escreva o SQL à mão em `db/migrations/NNNNN_init.sql` (goose não gera diff automático; sqlc não lê migrations neste setup, só `db/schema/`)
-- [ ] `internal/platform/httperr/error.go`: remova `ITEM_NOT_FOUND`, `INVALID_ITEM_NAME`, `INVALID_ITEM_STATUS`, `INVALID_ITEM_STATUS_TRANSITION`
-- [ ] `internal/platform/observability/metrics.go`: remova as métricas `example_*`
-- [ ] `CONTEXT.md`: remova as linhas "(exemplo)"
-- [ ] `docs/architecture.md` §2: reescreva o parágrafo sobre `internal/modules/example/` descrevendo o módulo real como referência
-- [ ] `grep -rn "example\|Item\b\|item_" internal db CONTEXT.md --exclude=architecture-rules.md` não deve achar sobras (`docs/architecture-rules.md` cita o example só como parte do vocabulário, não como código vivo)
-- [ ] Referências a `internal/modules/example/` em `CLAUDE.md`, skills e agentes já dizem "ou o módulo real mais completo" — não precisa editar
+Removing `example` (once the new module passes its tests):
+- [ ] Delete `internal/modules/example/`
+- [ ] `cmd/api/main.go`: remove `example.New(pool)` and its route registration
+- [ ] `db/schema/example/`, `db/queries/example/`: delete; `sqlc.yaml`: remove the entry
+- [ ] `db/migrations/00001_init.sql`: delete (creates the `items` table); generate the new schema's initial one: `go run ./cmd/migrate up` already applies existing migrations — for a new migration from the schema, write the SQL by hand at `db/migrations/NNNNN_init.sql` (goose doesn't auto-generate a diff; sqlc doesn't read migrations in this setup, only `db/schema/`)
+- [ ] `internal/platform/httperr/error.go`: remove `ITEM_NOT_FOUND`, `INVALID_ITEM_NAME`, `INVALID_ITEM_STATUS`, `INVALID_ITEM_STATUS_TRANSITION`
+- [ ] `internal/platform/observability/metrics.go`: remove the `example_*` metrics
+- [ ] `CONTEXT.md`: remove the "(example)" lines
+- [ ] `docs/architecture.md` §2: rewrite the paragraph about `internal/modules/example/` to describe the real module as the reference
+- [ ] `grep -rn "example\|Item\b\|item_" internal db CONTEXT.md --exclude=architecture-rules.md` should find no leftovers (`docs/architecture-rules.md` mentions `example` only as part of the vocabulary, not as live code)
+- [ ] References to `internal/modules/example/` in `CLAUDE.md`, skills, and agents already say "or the most complete real module" — nothing to edit there
 
-Validação final (tudo verde):
+Final validation (everything green):
 
 ```bash
 go build ./... && go vet ./... && test -z "$(gofmt -l .)"
@@ -169,30 +169,30 @@ go run ./cmd/migrate up
 go test -tags=integration ./...
 ```
 
-Commit: `feat(<modulo>): <resumo>` — e `chore: remove example module` se preferir separar.
+Commit: `feat(<module>): <summary>` — and `chore: remove example module` if you'd rather split it.
 
-Revisão antes do commit:
-- Se o Claude Code foi aberto na pasta do projeto (agentes/skills do projeto carregados): rode o agente `arch-reviewer` sobre `internal/modules/<modulo>/` e a skill `observability-enforcer`.
-- Senão (ex.: subagente trabalhando em outra pasta): leia `.claude/agents/arch-reviewer.md` e `.claude/skills/observability-enforcer/SKILL.md` do projeto e aplique os checklists à mão sobre o módulo, reportando no formato que eles definem.
+Review before commit:
+- If Claude Code was opened in the project's folder (project agents/skills loaded): run the `arch-reviewer` agent over `internal/modules/<module>/` and the `observability-enforcer` skill.
+- Otherwise (e.g. a subagent working in a different folder): read the project's `.claude/agents/arch-reviewer.md` and `.claude/skills/observability-enforcer/SKILL.md` and apply their checklists by hand over the module, reporting in the format they define.
 
-Sem remoto, não faça merge em `main` por conta própria: deixe a branch pronta e informe no passo 9 (o fluxo normal é PR).
+With no remote, don't merge into `main` on your own: leave the branch ready and report it in step 9 (the normal flow is a PR).
 
-## Passo 9 — Entregar ao usuário
+## Step 9 — Hand off to the user
 
-Informe:
-- placeholders usados (incluindo `{{module-path}}`)
-- `prompts/00-estrutura-arquitetural.md` seção **Resultado** completada com o que aconteceu nos passos 8–9
-- resultado de build / vet / gofmt / unit / integration (número de testes)
-- premissas registradas na spec (modo autônomo)
-- ajustes que o kit precisou (se houver)
-- pendências (Docker ausente, sqlc não instalado, plugins não instalados, remoto do GitHub)
-- próximo passo: nova sessão começa com a skill `session-start`; próximos módulos seguem o fluxo de feature (branch → brainstorming → plano → TDD → revisão → PR)
+Report:
+- placeholders used (including `{{module-path}}`)
+- `prompts/00-estrutura-arquitetural.md`'s **Result** section, completed with what happened in steps 8–9
+- build / vet / gofmt / unit / integration results (test counts)
+- assumptions recorded in the spec (autonomous mode)
+- any adjustments the kit needed (if any)
+- pending items (missing Docker, sqlc not installed, plugins not installed, GitHub remote)
+- next step: a new session starts with the `session-start` skill; subsequent modules follow the normal feature flow (branch → brainstorming → plan → TDD → review → PR)
 
 ---
 
-## Regras que valem depois do bootstrap
+## Rules that apply after the bootstrap
 
-Estão em `CLAUDE.md` e `docs/architecture-rules.md` do projeto. Resumo:
-- Branch nova a partir de `origin/main` por tarefa; fim da tarefa = PR.
+They live in the project's `CLAUDE.md` and `docs/architecture-rules.md`. Summary:
+- New branch from `origin/main` per task; end of task = PR.
 - Feature: brainstorming → spec → writing-plans → subagent-driven-development / tdd-agent → observability-enforcer → arch-reviewer → verification-before-completion → commit → PR.
-- Prompts relevantes em `prompts/`.
+- Relevant prompts go in `prompts/`.

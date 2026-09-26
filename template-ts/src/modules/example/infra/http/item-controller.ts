@@ -39,7 +39,7 @@ const itemSchema = {
   required: ['id', 'name', 'status', 'createdAt'],
 }
 
-// Controller: valida entrada via schema, chama use-case, faz match no Either. Sem regra de negócio.
+// Controller: validates input via schema, calls the use-case, matches on the Either. No business logic.
 @injectable()
 export class ItemController {
   constructor(
@@ -49,14 +49,14 @@ export class ItemController {
   ) {}
 
   async registerRoutes(app: FastifyInstance): Promise<void> {
-    // Escrita: schema valida forma (tipos, obrigatórios, sem campos extras → 400);
-    // regra de negócio fica no use-case (Either → 422/409 via http-error-mapper).
+    // Write: schema validates shape (types, required fields, no extra fields → 400);
+    // business rules stay in the use-case (Either → 422/409 via http-error-mapper).
     app.post<{ Body: CreateItemBody }>(
       '/items',
       {
         schema: {
           tags: ['Items'],
-          summary: 'Criar item',
+          summary: 'Create item',
           body: {
             type: 'object',
             properties: { name: { type: 'string' } },
@@ -84,7 +84,7 @@ export class ItemController {
       {
         schema: {
           tags: ['Items'],
-          summary: 'Listar itens',
+          summary: 'List items',
           querystring: {
             type: 'object',
             properties: {
@@ -129,7 +129,7 @@ export class ItemController {
       {
         schema: {
           tags: ['Items'],
-          summary: 'Buscar item por id',
+          summary: 'Find item by id',
           params: {
             type: 'object',
             properties: { itemId: { type: 'string' } },

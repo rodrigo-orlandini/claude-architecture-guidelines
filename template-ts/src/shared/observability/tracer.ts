@@ -7,7 +7,7 @@ import { trace, context as otelContext, propagation, SpanStatusCode, ROOT_CONTEX
 
 let _sdk: NodeSDK | null = null
 
-// Sem OTEL_EXPORTER_OTLP_ENDPOINT os spans vão para stdout (ConsoleSpanExporter).
+// Without OTEL_EXPORTER_OTLP_ENDPOINT, spans go to stdout (ConsoleSpanExporter).
 export function initTracer(): void {
   const exporter = process.env.OTEL_EXPORTER_OTLP_ENDPOINT
     ? new OTLPTraceExporter({

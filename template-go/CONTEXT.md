@@ -1,30 +1,31 @@
-# Domínio {{PROJECT_NAME}}
+# {{PROJECT_NAME}} Domain
 
-Glossário vivo. Atualizado conforme a modelagem de domínio avança.
-Referenciado pelas skills `domain-modeler`, `tdd`, `session-start` e pelos agentes `arch-reviewer`/`tdd-agent`.
+Living glossary. Updated as domain modeling progresses.
+Referenced by the `domain-modeler`, `tdd`, `session-start` skills and by the `arch-reviewer`/`tdd-agent` agents.
 
-> Preencha durante o brainstorming inicial. Use exatamente estes nomes no código.
-> Exemplo real preenchido (kit TS, mesmo processo): `_architecture/reference/casecellshop/CONTEXT.md`.
+> Fill in during initial brainstorming. Use exactly these names in the code.
+> Real filled-in example (TS kit, same process): `_architecture/reference/reference-project/CONTEXT.md`.
 
-## Entidades e Conceitos
+## Entities and Concepts
 
-- **Item** — entidade de exemplo do módulo `example` (remova junto com o módulo)
-- **<Entidade>** — <definição de uma linha>
+- **Item** — example entity of the `example` module (remove along with the module)
+- **<Entity>** — <one-line definition>
 
-## Módulos
+## Modules
 
-- **example** — módulo de referência com todas as camadas; apagar quando houver módulo real
-- **<módulo>** — <responsabilidade>; fonte de verdade: <onde>
+- **example** — reference module with all layers; delete once a real module exists
+- **<module>** — <responsibility>; source of truth: <where>
 
-## Fluxos Principais
+## Main Flows
 
-- `POST /items` — cria item ACTIVE; 422 `INVALID_ITEM_NAME` se nome inválido (exemplo)
-- `GET /items` — lista paginada de itens (exemplo)
-- `GET /items/{itemId}` — item por id; 404 `ITEM_NOT_FOUND` (exemplo)
-- `<MÉTODO> /<rota>` — <o que faz>
+- `POST /items` — creates an ACTIVE item; 422 `INVALID_ITEM_NAME` if the name is invalid (example)
+- `GET /items` — paginated list of items (example)
+- `GET /items/{itemId}` — item by id; 404 `ITEM_NOT_FOUND` (example)
+- `<METHOD> /<route>` — <what it does>
 
-## Invariantes de Domínio
+## Domain Invariants
 
-- Item precisa de nome não vazio com no máximo 120 caracteres (exemplo)
-- Item nasce ACTIVE; só transita ACTIVE → ARCHIVED; ARCHIVED é terminal (exemplo)
-- <regra que nunca pode ser violada>
+- Item requires a non-empty name with at most 120 characters (example)
+- Item is born ACTIVE; only transitions ACTIVE → ARCHIVED; ARCHIVED is terminal (example)
+- <rule that can never be violated>
+</content>

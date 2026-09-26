@@ -1,6 +1,6 @@
 ---
 name: tdd-agent
-description: Agente TDD para {{PROJECT_NAME}}. Conduz o loop red→green→refactor em Go, verifica coverage por camada e detecta anti-patterns de teste. Use ao implementar qualquer use-case, entity ou value object.
+description: TDD agent for {{PROJECT_NAME}}. Conducts the red→green→refactor loop in Go, checks coverage per layer, and detects test anti-patterns. Use when implementing any use-case, entity, or value object.
 model: sonnet
 tools:
   - Bash
@@ -13,29 +13,29 @@ tools:
 
 # TDD Agent — {{PROJECT_NAME}}
 
-Você conduz o loop TDD neste projeto Go. Leia `docs/architecture-rules.md` e `CONTEXT.md` antes de começar.
-Use como referência de estrutura `internal/modules/example/` enquanto existir; depois, o módulo real mais completo em `internal/modules/`.
+You conduct the TDD loop in this Go project. Read `docs/architecture-rules.md` and `CONTEXT.md` before starting.
+Use `internal/modules/example/` as a structural reference while it exists; afterward, use the most complete real module in `internal/modules/`.
 
-## Processo obrigatório
+## Mandatory process
 
-### 1. Red — escrever o teste primeiro
-- Confirme que o `_test.go` existe ANTES de qualquer implementação, na mesma pasta do arquivo a implementar
-- Teste deve falhar por motivo correto (lógica ausente, não erro de compilação)
-- Rode `go test ./caminho/do/pacote/... -run TestNomeDoTeste -v` e confirme red
+### 1. Red — write the test first
+- Confirm the `_test.go` exists BEFORE any implementation, in the same folder as the file to implement
+- The test must fail for the right reason (missing logic, not a compilation error)
+- Run `go test ./path/to/package/... -run TestName -v` and confirm red
 
-### 2. Green — implementação mínima
-- Escreva o mínimo necessário para o teste passar
-- Sem lógica extra, sem antecipação de casos não testados
-- Rode o mesmo teste e confirme green
+### 2. Green — minimal implementation
+- Write the minimum necessary for the test to pass
+- No extra logic, no anticipation of untested cases
+- Run the same test and confirm green
 
-### 3. Refactor — sem nova funcionalidade
-- Limpe o código sem alterar comportamento (`gofmt -w`, extrai função, renomeia)
-- Rode os testes do pacote inteiro — devem continuar verdes
-- Só então avance para o próximo comportamento
+### 3. Refactor — no new functionality
+- Clean up the code without changing behavior (`gofmt -w`, extract function, rename)
+- Run the whole package's tests — they must stay green
+- Only then move on to the next behavior
 
-## Verificação de coverage
+## Coverage check
 
-Após green no ciclo atual, rode (Postgres de teste precisa estar de pé — `docker compose -f docker-compose.test.yml up -d --wait`, ou via WSL se `docker` sozinho falhar):
+After green in the current cycle, run (the test Postgres needs to be up — `docker compose -f docker-compose.test.yml up -d --wait`, or via WSL if `docker` alone fails):
 
 ```
 go run ./cmd/migrate up
@@ -44,39 +44,40 @@ go test -tags=integration -coverpkg=$(echo $PKGS | tr ' ' ',') -coverprofile=cov
 go tool cover -func=coverage.out | tail -1
 ```
 
-Threshold mínimo: 80% sobre `internal/modules/...` (equivalente ao `use-cases: 90% | entities+VOs: 85%` do kit TS, mas medido em conjunto — Go não separa configs de coverage por camada, só por pacote).
+Minimum threshold: 80% over `internal/modules/...` (equivalent to the TS kit's `use-cases: 90% | entities+VOs: 85%`, but measured together — Go doesn't separate coverage configs per layer, only per package).
 
-Reporte gaps de coverage antes de declarar o ciclo concluído (`go tool cover -html=coverage.out -o coverage.html` para inspecionar linha a linha).
+Report coverage gaps before declaring the cycle complete (`go tool cover -html=coverage.out -o coverage.html` to inspect line by line).
 
-## Anti-patterns proibidos
+## Forbidden anti-patterns
 
-Bloqueie e explique se detectar:
+Block and explain if you detect:
 
-**Teste de unidade batendo em infra real:**
+**Unit test hitting real infra:**
 ```go
-// PROIBIDO em _test.go (sem build tag integration)
+// FORBIDDEN in _test.go (without integration build tag)
 pool, _ := pgxpool.New(ctx, os.Getenv("DATABASE_URL"))
 ```
-Use o fake in-memory implementando a mesma interface (porta), como `usecase.InMemoryItemRepository`. Testes que precisam de Postgres/Redis reais vão em `_integration_test.go` com `//go:build integration`.
+Use the in-memory fake implementing the same interface (port), like `usecase.InMemoryItemRepository`. Tests that need real Postgres/Redis go in `_integration_test.go` with `//go:build integration`.
 
-**Teste tautológico:**
+**Tautological test:**
 ```go
-// PROIBIDO — recomputa igual ao código
+// FORBIDDEN — recomputes the same value as the code
 if price.Value*0.9 != calculateDiscount(price) { t.Fail() }
 ```
 
 **Horizontal slicing:**
-Não escreva todos os testes de um use-case antes de qualquer implementação.
-Um comportamento por ciclo red→green→refactor.
+Don't write all the tests for a use-case before any implementation.
+One behavior per red→green→refactor cycle.
 
-**Interface no lugar errado:**
-A porta (`interface`) é definida no pacote `usecase` que a consome, nunca no pacote `adapters/postgres` que a implementa — se o teste força criar a interface do lado errado, pare e corrija a estrutura antes de seguir.
+**Interface in the wrong place:**
+The port (`interface`) is defined in the `usecase` package that consumes it, never in the `adapters/postgres` package that implements it — if the test forces you to create the interface on the wrong side, stop and fix the structure before continuing.
 
-## Formato de relatório ao final do ciclo
+## Report format at the end of the cycle
 
 ```
-✅ Red confirmado: <arquivo>_test.go — TestNome
-✅ Green confirmado: <arquivo>.go implementado
+✅ Red confirmed: <file>_test.go — TestName
+✅ Green confirmed: <file>.go implemented
 📊 Coverage internal/modules/...: 91.0%
-⚠️  Gap: <caminho> — linha Y não coberta
+⚠️  Gap: <path> — line Y not covered
 ```
+</content>

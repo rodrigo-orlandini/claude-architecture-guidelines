@@ -1,46 +1,46 @@
-# SETUP — o que instalar e configurar além dos arquivos copiados
+# SETUP — what to install and configure beyond the copied files
 
-Os arquivos de `template-ts/` ou `template-go/` não bastam sozinhos: parte do fluxo depende de ferramentas da máquina e de plugins do Claude Code. Faça isto **uma vez por máquina** (itens 1–3) e **uma vez por projeto** (itens 4–6). Itens marcados **[TS]** ou **[Go]** valem só para a stack correspondente; o resto vale para as duas.
+`template-ts/` or `template-go/`'s files aren't enough on their own: part of the workflow depends on machine tooling and Claude Code plugins. Do this **once per machine** (items 1–3) and **once per project** (items 4–6). Items marked **[TS]** or **[Go]** apply only to that stack; the rest applies to both.
 
 ---
 
-## 1. Ferramentas de sistema
+## 1. System tools
 
-| Ferramenta | Versão | Para quê | Verificar |
+| Tool | Version | For | Check |
 |---|---|---|---|
-| Node.js **[TS]** | 22 LTS (20+ funciona) | runtime, npm, vitest | `node -v` |
-| Go **[Go]** | 1.26+ | toolchain, testes, migrations | `go version` |
-| sqlc **[Go]** | recente | gerar código de acesso a dados a partir de SQL | `sqlc version` |
-| Git | qualquer recente | branches por tarefa | `git --version` |
-| Docker Engine + Compose v2 | recente | Postgres (e Redis, no kit TS) de dev e de teste, stack de observabilidade | `docker compose version` |
-| GitHub CLI (`gh`) | recente | abrir PR ao fim de cada tarefa | `gh --version` |
-| Claude Code | recente | skills, agentes, plugins | `claude --version` |
+| Node.js **[TS]** | 22 LTS (20+ works) | runtime, npm, vitest | `node -v` |
+| Go **[Go]** | 1.26+ | toolchain, tests, migrations | `go version` |
+| sqlc **[Go]** | latest | generate data-access code from SQL | `sqlc version` |
+| Git | any recent | one branch per task | `git --version` |
+| Docker Engine + Compose v2 | recent | Postgres (and Redis, in the TS kit) for dev and test, observability stack | `docker compose version` |
+| GitHub CLI (`gh`) | recent | open a PR at the end of each task | `gh --version` |
+| Claude Code | recent | skills, agents, plugins | `claude --version` |
 
-Passo a passo:
+Step by step:
 
-1. **[TS]** Instale Node 22: https://nodejs.org (ou `nvm install 22`).
-   **[Go]** Instale Go 1.26+: https://go.dev/dl/. Instale o sqlc: `go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest` (só é preciso para regenerar código depois de mudar uma query/schema — não é necessário para rodar ou testar o projeto).
-   **Windows, cuidado com PATH duplicado:** se você tiver mais de uma instalação de Go (comum: uma via instalador oficial de 64 bits e outra via `go install`/Scoop/Chocolatey de 32 bits), confira qual `go.exe` vem primeiro no PATH (`where go` no PowerShell/cmd, ou `which -a go` no Git Bash) e garanta que seja a versão **amd64**. Uma toolchain 32 bits (`386`) compila normalmente, mas ferramentas que embutem um parser WASM (como o `sqlc`) podem falhar com um panic de alocador de memória (`allocator_windows: failed to reserve memory`) quando rodam como binário 32 bits — reinstale a partir do `go.exe` amd64 (`go env GOARCH` deve dizer `amd64`) para corrigir.
-2. Instale Docker:
-   - **Windows sem Docker Desktop**: instale WSL2 + Ubuntu (`wsl --install -d Ubuntu`), dentro do Ubuntu instale Docker Engine (https://docs.docker.com/engine/install/ubuntu/) e o plugin compose (`sudo apt install docker-compose-plugin`). As portas dos containers ficam acessíveis em `localhost` no Windows, então a toolchain (Node ou Go) continua rodando no Windows.
-     Nada a editar no projeto: os comandos de compose passam por um wrapper portátil que detecta sozinho se `docker compose` funciona e, se não, usa `wsl docker compose` — **[TS]** `node scripts/compose.mjs <args>`, **[Go]** `go run ./scripts/compose -- <args>`. Para comandos manuais, prefixe com `wsl` diretamente: `wsl docker compose <args>`.
-     Se o `sqlc` (Go) também falhar por ser um binário 32 bits problemático mesmo depois de corrigir o PATH, baixe o release `linux_amd64` do sqlc e rode via `wsl /caminho/sqlc generate` — o binário linux funciona normalmente dentro do WSL.
-   - **Windows com Docker Desktop / macOS / Linux**: instale normalmente; nada a ajustar.
-3. Instale e autentique o GitHub CLI: `gh auth login`.
-4. Instale Claude Code: https://docs.claude.com/claude-code.
+1. **[TS]** Install Node 22: https://nodejs.org (or `nvm install 22`).
+   **[Go]** Install Go 1.26+: https://go.dev/dl/. Install sqlc: `go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest` (only needed to regenerate code after changing a query/schema — not required to run or test the project).
+   **Windows, watch out for a duplicate PATH:** if you have more than one Go install (common: one from the official 64-bit installer and another via `go install`/Scoop/Chocolatey at 32-bit), check which `go.exe` comes first on PATH (`where go` in PowerShell/cmd, or `which -a go` in Git Bash) and make sure it's the **amd64** build. A 32-bit (`386`) toolchain compiles fine, but tools that embed a WASM parser (like `sqlc`) can fail with a memory-allocator panic (`allocator_windows: failed to reserve memory`) when running as a 32-bit binary — reinstall from the amd64 `go.exe` (`go env GOARCH` should say `amd64`) to fix it.
+2. Install Docker:
+   - **Windows without Docker Desktop**: install WSL2 + Ubuntu (`wsl --install -d Ubuntu`), then inside Ubuntu install Docker Engine (https://docs.docker.com/engine/install/ubuntu/) and the compose plugin (`sudo apt install docker-compose-plugin`). Container ports stay reachable at `localhost` on Windows, so the toolchain (Node or Go) keeps running on Windows.
+     Nothing to edit in the project: compose commands go through a portable wrapper that detects on its own whether `docker compose` works and, if not, falls back to `wsl docker compose` — **[TS]** `node scripts/compose.mjs <args>`, **[Go]** `go run ./scripts/compose -- <args>`. For manual commands, prefix with `wsl` directly: `wsl docker compose <args>`.
+     If `sqlc` (Go) also fails as a problematic 32-bit binary even after fixing PATH, download the `linux_amd64` sqlc release and run it via `wsl /path/to/sqlc generate` — the Linux binary works fine inside WSL.
+   - **Windows with Docker Desktop / macOS / Linux**: install normally; nothing to adjust.
+3. Install and authenticate the GitHub CLI: `gh auth login`.
+4. Install Claude Code: https://docs.claude.com/claude-code.
 
 ---
 
-## 2. Plugins do Claude Code (obrigatórios)
+## 2. Claude Code plugins (required)
 
-O fluxo usa skills que **não** estão em `template-ts/.claude/` / `template-go/.claude/` porque vêm de plugins:
+The workflow uses skills that **aren't** in `template-ts/.claude/` / `template-go/.claude/` because they come from plugins:
 
-| Plugin | Fornece | Usado em |
+| Plugin | Provides | Used in |
 |---|---|---|
-| `superpowers@claude-plugins-official` | `brainstorming`, `writing-plans`, `subagent-driven-development`, `executing-plans`, `test-driven-development`, `systematic-debugging`, `requesting-code-review`, `verification-before-completion`, `finishing-a-development-branch`, `using-git-worktrees` | todo o ciclo de feature |
-| `clean-architecture@clean-architecture-skills` (repo `nathankim0/clean-architecture-skills`) **[TS]** | skill `clean-architecture` (revisão por princípios de Clean Architecture/SOLID) | revisões de design |
+| `superpowers@claude-plugins-official` | `brainstorming`, `writing-plans`, `subagent-driven-development`, `executing-plans`, `test-driven-development`, `systematic-debugging`, `requesting-code-review`, `verification-before-completion`, `finishing-a-development-branch`, `using-git-worktrees` | the whole feature cycle |
+| `clean-architecture@clean-architecture-skills` (repo `nathankim0/clean-architecture-skills`) **[TS]** | the `clean-architecture` skill (review against Clean Architecture/SOLID principles) | design reviews |
 
-Instalação (dentro do Claude Code, em qualquer pasta):
+Installation (inside Claude Code, from any folder):
 
 ```
 /plugin marketplace add anthropics/claude-plugins-official
@@ -50,64 +50,64 @@ Instalação (dentro do Claude Code, em qualquer pasta):
 /plugin install clean-architecture@clean-architecture-skills
 ```
 
-`.claude/settings.json` de cada template já declara o marketplace extra e habilita os plugins no escopo do projeto — ao abrir o projeto, o Claude Code oferece instalar o que faltar. Confirme com `/plugin` que aparecem habilitados.
+Each template's `.claude/settings.json` already declares the extra marketplace and enables the plugins at the project scope — when Claude Code opens the project, it offers to install whatever's missing. Confirm with `/plugin` that they show up as enabled.
 
-Verificação: em uma sessão nova no projeto, a skill `superpowers:brainstorming` (e, no kit TS, `clean-architecture:clean-architecture`) deve aparecer na lista de skills disponíveis.
+Verification: in a new session on the project, the `superpowers:brainstorming` skill (and, in the TS kit, `clean-architecture:clean-architecture`) should show up in the list of available skills.
 
 ---
 
-## 3. Plugins/ferramentas opcionais (usados no projeto original, não necessários)
+## 3. Optional plugins/tools (used in the original project, not required)
 
-| Item | O que é | Como instalar |
+| Item | What it is | How to install |
 |---|---|---|
-| `caveman` | respostas comprimidas (economia de tokens) | `/plugin marketplace add JuliusBrussee/caveman` → `/plugin install caveman@caveman` |
-| `rtk` | proxy que condensa saída de comandos | bloco "Command output" no `CLAUDE.md` só faz sentido se `rtk` estiver instalado; senão, não copie |
-| `graphify` | grafo de conhecimento do código (`/graphify`) | skill global em `~/.claude/skills/graphify/`; `graphify-out/` é gerado, não versione se não usar |
+| `caveman` | compressed responses (token savings) | `/plugin marketplace add JuliusBrussee/caveman` → `/plugin install caveman@caveman` |
+| `rtk` | proxy that condenses command output | the "Command output" block in `CLAUDE.md` only makes sense if `rtk` is installed; otherwise, don't copy it |
+| `graphify` | code knowledge graph (`/graphify`) | global skill at `~/.claude/skills/graphify/`; `graphify-out/` is generated — don't version it if you're not using it |
 
-**[TS] Skill `improve-codebase-architecture` (opcional, incompleta):** `template-ts/.claude/skills/improve-codebase-architecture/SKILL.md` foi copiada como estava no projeto original. Invocada só manualmente (`disable-model-invocation: true`), referencia skills que não existem no kit (`codebase-design`, `grilling`, `domain-modeling`) e um `HTML-REPORT.md` ausente. Funciona como roteiro mesmo assim; para usar completa, instale as skills correspondentes (coleção de Matt Pocock, `github.com/mattpocock/skills`). Se não for usar, apague a pasta.
+**[TS] `improve-codebase-architecture` skill (optional, incomplete):** `template-ts/.claude/skills/improve-codebase-architecture/SKILL.md` was copied as-is from the original project. It's invoked manually only (`disable-model-invocation: true`), and references skills that don't exist in this kit (`codebase-design`, `grilling`, `domain-modeling`) plus a missing `HTML-REPORT.md`. It still works as a rough playbook regardless; to use it in full, install the matching skills (Matt Pocock's skill collection, `github.com/mattpocock/skills`). If you won't use it, delete the folder.
 
 ---
 
-## 4. Por projeto: variáveis de ambiente
+## 4. Per project: environment variables
 
 ```bash
 cp .env.example .env
 ```
 
-- **[TS]** Rodando app **dentro** do compose: hosts internos já vêm configurados no `docker-compose.yml`. Rodando fora (`npm run dev:local`): use os hosts `localhost` do `.env.example`.
-- **[Go]** `.env.example` já usa `localhost` (para `go run ./cmd/api` no host); o `docker-compose.yml` sobrescreve `DATABASE_URL` para o serviço `app` via `environment:`.
-- `OTEL_EXPORTER_OTLP_ENDPOINT` vazio = spans no stdout; com a stack de observabilidade: `http://localhost:4318`.
+- **[TS]** Running the app **inside** compose: the internal hostnames are already set up in `docker-compose.yml`. Running it outside (`npm run dev:local`): use the `localhost` hosts from `.env.example`.
+- **[Go]** `.env.example` already uses `localhost` (for `go run ./cmd/api` on the host); `docker-compose.yml` overrides `DATABASE_URL` for the `app` service via `environment:`.
+- `OTEL_EXPORTER_OTLP_ENDPOINT` empty = spans go to stdout; with the observability stack up: `http://localhost:4318`.
 
 ---
 
-## 5. Por projeto: GitHub
+## 5. Per project: GitHub
 
-1. Crie o repositório e faça o push inicial em `main`:
+1. Create the repository and push the initial commit to `main`:
    ```bash
    git init -b main && git add . && git commit -m "chore: bootstrap architecture"
-   gh repo create <nome> --private --source . --push
+   gh repo create <name> --private --source . --push
    ```
-2. CI (`.github/workflows/ci.yml`) roda sozinho em push/PR para `main`. Não precisa de secrets: Postgres (e Redis, no kit TS) são `services:` do runner.
-3. Recomendado: proteja `main` exigindo os checks `Build`, `Unit Tests`, `Integration Tests`, `Coverage` (Settings → Branches).
+2. CI (`.github/workflows/ci.yml`) runs on its own on push/PR to `main`. No secrets needed: Postgres (and Redis, in the TS kit) are runner `services:`.
+3. Recommended: protect `main` by requiring the `Build`, `Unit Tests`, `Integration Tests`, `Coverage` checks (Settings → Branches).
 
 ---
 
-## 6. Por projeto: memória do Claude Code
+## 6. Per project: Claude Code memory
 
-Preferências que o projeto original (TS) tinha em memória local (não versionada) e que agora estão escritas nas regras:
+Preferences the original project (TS) had in local, unversioned memory, now written into the rules instead:
 
-- **[TS]** Arquivo de interface sem prefixo `i-` (`item-repository.ts`), interface com prefixo `I` (`IItemRepository`) → em `architecture-rules.md`. **[Go]** o equivalente é justamente o oposto: sem prefixo `I` em nenhum lugar (`ItemRepository`) — Go não usa Hungarian notation; já documentado em `docs/architecture-rules.md` do kit Go.
-- Seed/dados de teste entram pela fonte de verdade (ex.: sistema externo), nunca direto no banco derivado, para validar o fluxo real → registre regra equivalente no `CLAUDE.md` se o domínio novo tiver sincronização com sistema externo.
+- **[TS]** Repository interface file with no `i-` prefix (`item-repository.ts`), interface itself keeps the `I` prefix (`IItemRepository`) → in `architecture-rules.md`. **[Go]** the equivalent is the exact opposite: no `I` prefix anywhere (`ItemRepository`) — Go doesn't use Hungarian notation; already documented in the Go kit's `docs/architecture-rules.md`.
+- Seed/test data enters through the source of truth (e.g. an external system), never straight into the derived database, so it exercises the real flow → record an equivalent rule in `CLAUDE.md` if the new domain syncs with an external system.
 
 ---
 
-## Checklist final
+## Final checklist
 
-- [ ] **[TS]** `node -v` ≥ 20 · **[Go]** `go version` ≥ 1.26 e `go env GOARCH` = `amd64`
-- [ ] `docker compose version` (ou `wsl docker compose version`) ok
-- [ ] `gh auth status` ok — só necessário quando for criar o repositório remoto (§5)
-- [ ] `/plugin` mostra `superpowers` (e, no kit TS, `clean-architecture`) habilitados
-- [ ] `.env` criado
-- [ ] **[TS]** `npm run typecheck && npm run test:unit` verdes · **[Go]** `go build ./... && go vet ./... && go test ./...` verdes
-- [ ] **[TS]** `npm run test:integration` verde · **[Go]** `go test -tags=integration ./...` verde (banco de teste de pé e migrado)
-- [ ] Repositório no GitHub com CI rodando
+- [ ] **[TS]** `node -v` ≥ 20 · **[Go]** `go version` ≥ 1.26 and `go env GOARCH` = `amd64`
+- [ ] `docker compose version` (or `wsl docker compose version`) ok
+- [ ] `gh auth status` ok — only needed once you create the remote repository (§5)
+- [ ] `/plugin` shows `superpowers` (and, in the TS kit, `clean-architecture`) enabled
+- [ ] `.env` created
+- [ ] **[TS]** `npm run typecheck && npm run test:unit` green · **[Go]** `go build ./... && go vet ./... && go test ./...` green
+- [ ] **[TS]** `npm run test:integration` green · **[Go]** `go test -tags=integration ./...` green (test database up and migrated)
+- [ ] Repository on GitHub with CI running

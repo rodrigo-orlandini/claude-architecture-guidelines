@@ -2,49 +2,49 @@
 
 {{PROJECT_DESCRIPTION}}
 
-Monolito modular com Clean Architecture — ver [`docs/architecture.md`](./docs/architecture.md).
+Modular monolith with Clean Architecture — see [`docs/architecture.md`](./docs/architecture.md).
 
-## Pré-requisitos
+## Prerequisites
 
 - Node.js 22+
 - Docker + Docker Compose
 
-## Rodando
+## Running
 
 ```bash
 cp .env.example .env
 npm install
 npx prisma generate
-npm run infra:up               # Postgres + Redis (docker nativo ou via WSL, ver scripts/compose.mjs)
-npm run db:migrate              # aplica migrations no banco de dev
-npm run dev:local               # ou: npm run dev (app também em container)
+npm run infra:up               # Postgres + Redis (native docker or via WSL, see scripts/compose.mjs)
+npm run db:migrate              # applies migrations to the dev database
+npm run dev:local               # or: npm run dev (app also in a container)
 ```
 
 - API: http://localhost:3000
 - Swagger: http://localhost:3000/docs
 - Health: http://localhost:3000/health
-- Métricas: http://localhost:3000/metrics
+- Metrics: http://localhost:3000/metrics
 
-## Testes
+## Tests
 
 ```bash
 npm run typecheck
 npm run test:unit
-npm run test:integration   # sobe docker-compose.test.yml
+npm run test:integration   # brings up docker-compose.test.yml
 npm run test:coverage      # unit + integration, threshold 80%
 ```
 
-## Observabilidade
+## Observability
 
 ```bash
 node scripts/compose.mjs -f docker-compose.observability.yml up -d
 ```
 
-Grafana em http://localhost:3001 (Prometheus, Loki e Tempo provisionados).
+Grafana at http://localhost:3001 (Prometheus, Loki, and Tempo provisioned).
 
-## Documentação
+## Documentation
 
-- [`CONTEXT.md`](./CONTEXT.md) — glossário de domínio
-- [`docs/architecture.md`](./docs/architecture.md) — arquitetura e fluxo de desenvolvimento
-- [`src/shared/core/architecture-rules.md`](./src/shared/core/architecture-rules.md) — regras de revisão
-- [`PROMPTS.md`](./PROMPTS.md) — prompts de IA usados no desenvolvimento
+- [`CONTEXT.md`](./CONTEXT.md) — domain glossary
+- [`docs/architecture.md`](./docs/architecture.md) — architecture and development flow
+- [`src/shared/core/architecture-rules.md`](./src/shared/core/architecture-rules.md) — review rules
+- [`PROMPTS.md`](./PROMPTS.md) — AI prompts used during development

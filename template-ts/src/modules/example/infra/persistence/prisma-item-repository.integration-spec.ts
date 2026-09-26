@@ -4,7 +4,7 @@ import { PrismaClient } from '@prisma/client'
 import { PrismaItemRepository } from './prisma-item-repository'
 import { ItemMapper } from '../../mappers/item-mapper'
 
-// Roda contra o Postgres de docker-compose.test.yml (DATABASE_URL em vitest.integration.ts).
+// Runs against the Postgres from docker-compose.test.yml (DATABASE_URL in vitest.integration.ts).
 describe('PrismaItemRepository (integration)', () => {
   const prisma = new PrismaClient()
   const repo = new PrismaItemRepository(prisma)

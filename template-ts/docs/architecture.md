@@ -1,109 +1,109 @@
-# Arquitetura — {{PROJECT_NAME}}
+# Architecture — {{PROJECT_NAME}}
 
-Monolito modular com Clean Architecture. Repositório único, mas cada módulo é um bounded context isolado, extraível como microsserviço sem retrabalho.
+Modular monolith with Clean Architecture. A single repository, but each module is an isolated bounded context, extractable as a microservice without rework.
 
-Regras de revisão (checklist curto): `src/shared/core/architecture-rules.md`.
-Glossário de domínio: `CONTEXT.md`.
+Review rules (short checklist): `src/shared/core/architecture-rules.md`.
+Domain glossary: `CONTEXT.md`.
 
 ---
 
 ## 1. Stack
 
-| Camada | Tecnologia |
+| Layer | Technology |
 |---|---|
 | Runtime | Node.js 22 |
-| Linguagem | TypeScript (strict, decorators habilitados) |
-| HTTP | Fastify 4 + @fastify/swagger (docs em `/docs`) |
+| Language | TypeScript (strict, decorators enabled) |
+| HTTP | Fastify 4 + @fastify/swagger (docs at `/docs`) |
 | DI / IoC | tsyringe + reflect-metadata |
 | ORM | Prisma 5 |
-| Banco | PostgreSQL 16 |
-| Cache / filas | Redis 7 (ioredis, BullMQ quando necessário) |
-| Validação | JSON schema do Fastify na borda; zod para payloads externos |
-| Logs | pino (JSON) + AsyncLocalStorage para correlationId |
-| Métricas | prom-client (`GET /metrics`) |
-| Tracing | OpenTelemetry (OTLP → Tempo, ou console) |
-| Testes | Vitest 2 (unit, integration, coverage combinado) |
+| Database | PostgreSQL 16 |
+| Cache / queues | Redis 7 (ioredis, BullMQ when needed) |
+| Validation | Fastify JSON schema at the edge; zod for external payloads |
+| Logs | pino (JSON) + AsyncLocalStorage for correlationId |
+| Metrics | prom-client (`GET /metrics`) |
+| Tracing | OpenTelemetry (OTLP → Tempo, or console) |
+| Tests | Vitest 2 (unit, integration, combined coverage) |
 | Containers | Docker multistage + Docker Compose (dev, test, observability) |
 | CI | GitHub Actions: build → unit ∥ integration → coverage 80% |
 
-Nomenclatura de arquivos e pastas: kebab-case em todo o projeto, sem exceção.
-Aliases de import: `@shared/*`, `@modules/*`, `@infra/*` (tsconfig + vitest + tsc-alias no build).
+File and folder naming: kebab-case throughout the project, no exceptions.
+Import aliases: `@shared/*`, `@modules/*`, `@infra/*` (tsconfig + vitest + tsc-alias in the build).
 
 ---
 
-## 2. Estrutura de pastas
+## 2. Folder structure
 
 ```
 src/
-├── main.ts                      # bootstrap: tracer → shared infra → módulos → HTTP → workers
+├── main.ts                      # bootstrap: tracer → shared infra → modules → HTTP → workers
 ├── infra/
 │   └── http/
-│       ├── server.ts            # Fastify: swagger, hooks correlationId/span/métrica, /health, /metrics, controllers
+│       ├── server.ts            # Fastify: swagger, correlationId/span/metric hooks, /health, /metrics, controllers
 │       └── fastify-types.d.ts   # augment FastifyRequest { correlationId, span }
 ├── shared/
-│   ├── container.ts             # registra clientes únicos (PrismaClient, Redis...)
+│   ├── container.ts             # registers single-instance clients (PrismaClient, Redis...)
 │   ├── core/
 │   │   ├── either.ts            # Either<L,R>, left(), right(), Success, Failure
-│   │   ├── use-case.ts          # interface IUseCase<Input, Output>
+│   │   ├── use-case.ts          # IUseCase<Input, Output> interface
 │   │   └── architecture-rules.md
 │   ├── errors/
-│   │   ├── domain-error.ts      # classe base abstrata com `code`
+│   │   ├── domain-error.ts      # abstract base class with `code`
 │   │   └── http-error-mapper.ts # code → HTTP status
 │   ├── observability/
-│   │   ├── context.ts           # AsyncLocalStorage { correlationId, ...ids de negócio }
-│   │   ├── logger.ts            # pino + getLogger() com contexto e traceId
-│   │   ├── metrics.ts           # registry prom-client + métricas nomeadas
+│   │   ├── context.ts           # AsyncLocalStorage { correlationId, ...business ids }
+│   │   ├── logger.ts            # pino + getLogger() with context and traceId
+│   │   ├── metrics.ts           # prom-client registry + named metrics
 │   │   └── tracer.ts            # OpenTelemetry NodeSDK
 │   ├── database/prisma-client.ts
 │   └── types/pagination.ts
 └── modules/
-    └── <módulo>/
+    └── <module>/
         ├── entities/
         │   ├── <entity>.ts (+ .spec.ts)
         │   └── value-objects/<vo>.ts (+ .spec.ts)
         ├── use-cases/
-        │   ├── <verbo-substantivo>/
-        │   │   ├── <verbo-substantivo>.ts
-        │   │   ├── <verbo-substantivo>.spec.ts
-        │   │   └── in-memory-<port>.ts        # fake usado só por este use-case
-        │   └── in-memory-<port>.ts            # fake compartilhado
-        ├── repositories/<nome>-repository.ts  # interfaces (ports) — IFooRepository
-        ├── errors/<nome>-error.ts             # DomainErrors do módulo
-        ├── dtos/<use-case>-dto.ts             # Input/Output dos use-cases
-        ├── mappers/<entity>-mapper.ts         # linha do banco ↔ domínio
-        ├── presenters/<entity>-presenter.ts   # domínio → contrato HTTP
+        │   ├── <verb-noun>/
+        │   │   ├── <verb-noun>.ts
+        │   │   ├── <verb-noun>.spec.ts
+        │   │   └── in-memory-<port>.ts        # fake used only by this use-case
+        │   └── in-memory-<port>.ts            # shared fake
+        ├── repositories/<name>-repository.ts  # interfaces (ports) — IFooRepository
+        ├── errors/<name>-error.ts             # module DomainErrors
+        ├── dtos/<use-case>-dto.ts             # use-case Input/Output
+        ├── mappers/<entity>-mapper.ts         # DB row ↔ domain
+        ├── presenters/<entity>-presenter.ts   # domain → HTTP contract
         ├── infra/
-        │   ├── http/<recurso>-controller.ts
-        │   ├── persistence/prisma-<nome>-repository.ts (+ .integration-spec.ts)
-        │   ├── cache/redis-<nome>.ts
-        │   └── queue/bullmq-<nome>-worker.ts
-        └── container.ts                       # register<Modulo>Module()
+        │   ├── http/<resource>-controller.ts
+        │   ├── persistence/prisma-<name>-repository.ts (+ .integration-spec.ts)
+        │   ├── cache/redis-<name>.ts
+        │   └── queue/bullmq-<name>-worker.ts
+        └── container.ts                       # register<Module>Module()
 ```
 
-Enquanto existir, `src/modules/example/` implementa todas as camadas: escrita (`POST /items` → 201), leitura paginada (`GET /items`), leitura por id com 404 (`GET /items/:itemId`), VO simples (`item-name.ts`), VO enum com máquina de estados (`item-status.ts`), comportamento de entity (`Item.archive()`), mapper, presenter e repository Prisma com integration spec. Copie o padrão; o roteiro de remoção está no passo 8 do `BOOTSTRAP.md` do kit `_architecture`. Rotas HTTP testadas via `app.inject` em `infra/http/item-controller.integration-spec.ts`. Depois da remoção, o módulo real mais completo em `src/modules/` passa a ser a referência (atualize este parágrafo).
+While it exists, `src/modules/example/` implements all layers: writing (`POST /items` → 201), paginated reading (`GET /items`), read by id with 404 (`GET /items/:itemId`), a simple VO (`item-name.ts`), an enum VO with a state machine (`item-status.ts`), entity behavior (`Item.archive()`), mapper, presenter, and a Prisma repository with an integration spec. Copy the pattern; the removal steps are in step 8 of the `_architecture` kit's `BOOTSTRAP.md`. HTTP routes are tested via `app.inject` in `infra/http/item-controller.integration-spec.ts`. After removal, the most complete real module in `src/modules/` becomes the reference (update this paragraph).
 
 ---
 
-## 3. Regra de dependência (inviolável)
+## 3. Dependency rule (inviolable)
 
 ```
 infra/http (controller) ──► use-cases ──► entities / value-objects
         │                      │
         │                      └──► repositories/ (interfaces)
         ▼                                   ▲
-    presenters                              │ implementa
+    presenters                              │ implements
                           infra/persistence ┘
 ```
 
-- `entities/` não importa nada fora do domínio do módulo (só `@shared/core` e `@shared/errors`).
-- `use-cases/` importa apenas entities, dtos, errors e interfaces de `repositories/`.
-- `infra/` implementa interfaces; ninguém de dentro importa `infra/`.
-- Módulos não importam entities/use-cases uns dos outros. Comunicação cross-module: um módulo define a interface (port) no próprio `repositories/`, o outro implementa, e o `container.ts` liga.
-- Wiring só em `container.ts`; `main.ts` chama `register<Modulo>Module()` de cada módulo.
+- `entities/` does not import anything outside the module's domain (only `@shared/core` and `@shared/errors`).
+- `use-cases/` imports only entities, dtos, errors, and interfaces from `repositories/`.
+- `infra/` implements interfaces; nothing inside imports `infra/`.
+- Modules do not import each other's entities/use-cases. Cross-module communication: one module defines the interface (port) in its own `repositories/`, the other implements it, and `container.ts` wires them together.
+- Wiring only in `container.ts`; `main.ts` calls `register<Module>Module()` for each module.
 
 ---
 
-## 4. Either e erros
+## 4. Either and errors
 
 ```
 entity / VO   → static create(): Either<InvalidXError, X>
@@ -112,98 +112,98 @@ controller    → result.isFailure() ? toHttpError(result.value) → 4xx/5xx
                                    : Presenter.toHTTP(result.value) → 2xx
 ```
 
-- Nenhuma exceção de domínio é lançada; só `left(...)`. Exceções ficam para bugs e falhas de infra.
-- Status: validação de VO 422, não encontrado 404, conflito/transição inválida 409, forma do body 400 (schema Fastify).
-- `DomainError.code` em UPPER_SNAKE; cada code novo tem status no `http-error-mapper.ts`.
-- Mapper (DB → domínio) pode lançar ao encontrar linha corrompida — é bug de dados, não fluxo de negócio.
+- No domain exception is thrown; only `left(...)`. Exceptions are reserved for bugs and infra failures.
+- Status codes: VO validation 422, not found 404, conflict/invalid transition 409, malformed body 400 (Fastify schema).
+- `DomainError.code` in UPPER_SNAKE; every new code gets a status in `http-error-mapper.ts`.
+- Mapper (DB → domain) may throw when it finds a corrupted row — that's a data bug, not a business flow.
 
 ---
 
-## 5. Value Objects e Entities
+## 5. Value Objects and Entities
 
-- VO: construtor privado, `static create(raw)` retornando Either, `readonly value`.
-- Entity: construtor privado, `static create(props, id?)`, props privadas com getters.
-- Invariante estrutural na entity/VO; regra de aplicação no use-case (skill `domain-modeler` decide).
-- Enum de domínio: VO com lista `as const` + `transitionTo()`; coluna `String` no banco, validada no mapper.
-- Regra dependente de hora: `now` no input do use-case ou `IClock` injetado.
+- VO: private constructor, `static create(raw)` returning Either, `readonly value`.
+- Entity: private constructor, `static create(props, id?)`, private props with getters.
+- Structural invariant in the entity/VO; application rule in the use-case (the `domain-modeler` skill decides).
+- Domain enum: VO with an `as const` list + `transitionTo()`; `String` column in the database, validated in the mapper.
+- Time-dependent rule: `now` in the use-case's input or `IClock` injected.
 
 ---
 
-## 6. Testes
+## 6. Tests
 
-| Tipo | Arquivo | Config | I/O | Dependências |
+| Type | File | Config | I/O | Dependencies |
 |---|---|---|---|---|
-| Unit | `*.spec.ts` co-locado | `vitest.config.ts` | nenhum | fakes in-memory que implementam a interface |
-| Integration | `*.integration-spec.ts` em `infra/` | `vitest.integration.ts` | Postgres/Redis reais (`docker-compose.test.yml`, portas 5433/6380) | clientes reais; isolamento com TRUNCATE no `beforeEach` |
-| Coverage | ambos | `vitest.coverage.ts` | ambos | threshold global 80% |
+| Unit | co-located `*.spec.ts` | `vitest.config.ts` | none | in-memory fakes implementing the interface |
+| Integration | `*.integration-spec.ts` in `infra/` | `vitest.integration.ts` | real Postgres/Redis (`docker-compose.test.yml`, ports 5433/6380) | real clients; isolation via TRUNCATE in `beforeEach` |
+| Coverage | both | `vitest.coverage.ts` | both | 80% global threshold |
 
-`npm run typecheck` checa também os specs (`tsconfig.spec.json`); o Vitest não checa tipos.
+`npm run typecheck` also checks the specs (`tsconfig.spec.json`); Vitest does not type-check.
 
-Rotas HTTP podem ser testadas em integration via `app.inject()` do Fastify (sem porta).
+HTTP routes can be tested in integration via Fastify's `app.inject()` (no port).
 
-Proibido: `vi.mock()` de implementação de infra em unit, teste tautológico, horizontal slicing (todos os testes antes de qualquer código).
+Forbidden: `vi.mock()` of an infra implementation in unit tests, tautological tests, horizontal slicing (all tests before any code).
 
-Alvo por camada: use-cases 90%, entities/VOs 85%, infra 70%.
+Target per layer: use-cases 90%, entities/VOs 85%, infra 70%.
 
-Loop TDD: spec red → interface do repository se necessária → implementação mínima green → refactor.
-
----
-
-## 7. Observabilidade
-
-- Hook `onRequest`: lê `x-correlation-id` (ou usa `request.id`), devolve no header, grava no AsyncLocalStorage, abre span `http.request`.
-- `addToContext({ orderId })` junta ids de negócio ao contexto; todo `getLogger()` seguinte do fluxo os inclui.
-- Hook `onResponse`: histograma `http_request_duration_ms{method,route,status_code}`, fecha span.
-- `getLogger()` em use-cases/infra injeta `correlationId`, `traceId`, `spanId` e ids extras do contexto.
-- Métricas de negócio declaradas em `shared/observability/metrics.ts`.
-- Fluxos assíncronos (fila, outbox): propague `correlationId` e o id de negócio no payload do job e reabra o contexto no worker com `runWithContext`.
-- Stack local: `node scripts/compose.mjs -f docker-compose.observability.yml up -d` → Grafana `:3001`, Prometheus `:9090`, Tempo `:3200/:4318`, Loki `:3100`.
+TDD loop: red spec → repository interface if needed → minimal green implementation → refactor.
 
 ---
 
-## 8. Ambientes Docker
+## 7. Observability
 
-- `Dockerfile` multistage: `dev` (tsx watch), `build` (tsc + tsc-alias), `prod` (só `dist/` + deps de produção).
-- `docker-compose.yml`: app + Postgres 16 + Redis 7 com healthcheck; `container_name` explícito `{{project-slug}}-*`.
-- `docker-compose.test.yml`: Postgres (5433) e Redis (6380) isolados para integration; schema aplicado com `prisma db push --force-reset` (banco descartável).
-- Schema em dev/prod: migrations (`prisma/migrations/`, criadas com `npm run db:migrate`, aplicadas com `prisma migrate deploy` — o container `dev` roda isso ao subir).
-- `docker-compose.observability.yml`: Prometheus, Tempo, Loki, Promtail, Grafana provisionado.
-- `scripts/compose.mjs`: wrapper de `docker compose` — usa Docker nativo ou, no Windows sem Docker Desktop, `wsl docker`. Todos os scripts npm passam por ele.
+- `onRequest` hook: reads `x-correlation-id` (or uses `request.id`), returns it in the header, stores it in AsyncLocalStorage, opens the `http.request` span.
+- `addToContext({ orderId })` adds business ids to the current context; every subsequent `getLogger()` in the flow includes them.
+- `onResponse` hook: `http_request_duration_ms{method,route,status_code}` histogram, closes the span.
+- `getLogger()` in use-cases/infra injects `correlationId`, `traceId`, `spanId`, and extra ids from the context.
+- Business metrics declared in `shared/observability/metrics.ts`.
+- Async flows (queue, outbox): propagate `correlationId` and the business id in the job payload and reopen the context in the worker with `runWithContext`.
+- Local stack: `node scripts/compose.mjs -f docker-compose.observability.yml up -d` → Grafana `:3001`, Prometheus `:9090`, Tempo `:3200/:4318`, Loki `:3100`.
 
 ---
 
-## 9. Fluxo de desenvolvimento por sessão
+## 8. Docker environments
 
-| Fase | Ferramenta |
+- `Dockerfile` multistage: `dev` (tsx watch), `build` (tsc + tsc-alias), `prod` (only `dist/` + production deps).
+- `docker-compose.yml`: app + Postgres 16 + Redis 7 with healthcheck; explicit `container_name` `{{project-slug}}-*`.
+- `docker-compose.test.yml`: isolated Postgres (5433) and Redis (6380) for integration; schema applied with `prisma db push --force-reset` (disposable database).
+- Schema in dev/prod: migrations (`prisma/migrations/`, created with `npm run db:migrate`, applied with `prisma migrate deploy` — the `dev` container runs this on startup).
+- `docker-compose.observability.yml`: Prometheus, Tempo, Loki, Promtail, provisioned Grafana.
+- `scripts/compose.mjs`: `docker compose` wrapper — uses native Docker or, on Windows without Docker Desktop, `wsl docker`. All npm scripts go through it.
+
+---
+
+## 9. Development flow per session
+
+| Phase | Tool |
 |---|---|
-| Início de sessão | skill `session-start` |
-| Feature nova / decisão arquitetural | `superpowers:brainstorming` → spec em `docs/superpowers/specs/AAAA-MM-DD-<tema>-design.md` |
-| Plano de implementação | `superpowers:writing-plans` → `docs/superpowers/plans/AAAA-MM-DD-<tema>.md` |
-| Execução do plano | `superpowers:subagent-driven-development` (ledger em `.superpowers/sdd/`, fora do git) |
-| Modelagem de entity/VO | skill `domain-modeler` |
-| Implementação | agente `tdd-agent` |
-| Observabilidade | skill `observability-enforcer` |
-| Revisão de diff | agente `arch-reviewer` |
-| Antes de fechar | `superpowers:verification-before-completion` |
-| Integração | `superpowers:finishing-a-development-branch` → PR |
+| Start of session | `session-start` skill |
+| New feature / architectural decision | `superpowers:brainstorming` → spec in `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` |
+| Implementation plan | `superpowers:writing-plans` → `docs/superpowers/plans/YYYY-MM-DD-<topic>.md` |
+| Plan execution | `superpowers:subagent-driven-development` (ledger in `.superpowers/sdd/`, outside git) |
+| Entity/VO modeling | `domain-modeler` skill |
+| Implementation | `tdd-agent` agent |
+| Observability | `observability-enforcer` skill |
+| Diff review | `arch-reviewer` agent |
+| Before closing | `superpowers:verification-before-completion` |
+| Integration | `superpowers:finishing-a-development-branch` → PR |
 
 ```
 session-start
-  ↓ feature declarada (branch nova a partir de origin/main)
-brainstorming → spec aprovada → writing-plans → plano aprovado
+  ↓ declared feature (new branch from origin/main)
+brainstorming → approved spec → writing-plans → approved plan
   ↓
-domain-modeler         → entity/VO modelados, CONTEXT.md atualizado
+domain-modeler         → entity/VO modeled, CONTEXT.md updated
   ↓
-tdd-agent              → red → green → refactor por use-case
+tdd-agent              → red → green → refactor per use-case
   ↓
-observability-enforcer → correlationId, métricas, spans presentes
+observability-enforcer → correlationId, metrics, spans present
   ↓
-arch-reviewer          → regra de dependência, Either, kebab-case, DI ok
+arch-reviewer          → dependency rule, Either, kebab-case, DI ok
   ↓
-verification-before-completion → typecheck + testes rodados, saída conferida
+verification-before-completion → typecheck + tests run, output checked
   ↓
-commit (Conventional Commits) → PR → CI verde → merge
+commit (Conventional Commits) → PR → green CI → merge
 ```
 
-Todo prompt relevante vai para `prompts/NN-<tema>.md` (ver `prompts/CLAUDE.md`) e é indexado em `PROMPTS.md`.
-Decisões que não devem ser re-discutidas viram ADR em `docs/adr/NNNN-<titulo>.md`.
+Every relevant prompt goes into `prompts/NN-<topic>.md` (see `prompts/CLAUDE.md`) and is indexed in `PROMPTS.md`.
+Decisions that should not be re-discussed become an ADR in `docs/adr/NNNN-<title>.md`.

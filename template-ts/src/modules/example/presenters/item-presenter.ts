@@ -9,7 +9,7 @@ export interface ItemHttp {
   createdAt: string
 }
 
-// Domínio → contrato HTTP. Único lugar que decide o formato de resposta.
+// Domain → HTTP contract. The only place that decides the response format.
 export class ItemPresenter {
   static toHTTP(item: Item): ItemHttp {
     return { id: item.id, name: item.name, status: item.status, createdAt: item.createdAt.toISOString() }

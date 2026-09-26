@@ -1,28 +1,28 @@
-# 00 Estrutura Arquitetural
+# 00 Architectural Structure
 
-## Objetivo
+## Objective
 
-Aplicar a estrutura padrão (monolito modular + Clean Architecture + skills/agentes Claude Code) ao {{PROJECT_NAME}}.
+Apply the standard structure (modular monolith + Clean Architecture + Claude Code skills/agents) to {{PROJECT_NAME}}.
 
-## Contexto
+## Context
 
-Prompt inicial do projeto, anterior a qualquer feature. Estrutura copiada de `_architecture/` (originada no projeto CaseCellShop).
+Initial project prompt, prior to any feature. Structure copied from `_architecture/` (originated in the reference project).
 
 ## Prompt
 
 ```
-Leia <caminho>/_architecture/README.md e aplique a estrutura neste projeto seguindo BOOTSTRAP.md.
-Nome do projeto: {{PROJECT_NAME}}. Domínio: <descrição curta>.
+Read <path>/_architecture/README.md and apply the structure to this project following BOOTSTRAP.md.
+Project name: {{PROJECT_NAME}}. Domain: <short description>.
 ```
 
-## Critérios de Direcionamento
+## Direction Criteria
 
-Estrutura já validada em outro projeto; o prompt só aponta para o kit e informa nome e domínio. Decisões de arquitetura não são re-discutidas — apenas o domínio (CONTEXT.md) é modelado via brainstorming.
+Structure already validated in another project; the prompt only points to the kit and provides the name and domain. Architecture decisions are not re-discussed — only the domain (CONTEXT.md) is modeled via brainstorming.
 
-## Resultado
+## Result
 
-<preencher: o que foi gerado, o que foi ajustado>
+<fill in: what was generated, what was adjusted>
 
-## Revisões
+## Revisions
 
-Nenhuma.
+None.

@@ -10,8 +10,8 @@ export interface FindManyResult {
   total: number
 }
 
-// Port. Implementações: infra/persistence/prisma-item-repository.ts (real),
-// use-cases/in-memory-item-repository.ts (fake de teste).
+// Port. Implementations: infra/persistence/prisma-item-repository.ts (real),
+// use-cases/in-memory-item-repository.ts (test fake).
 export interface IItemRepository {
   findMany(params: FindManyParams): Promise<FindManyResult>
   findById(id: string): Promise<Item | null>

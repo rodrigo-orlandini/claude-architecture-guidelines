@@ -1,67 +1,67 @@
 ---
 name: domain-modeler
-description: Modelagem de domínio {{PROJECT_NAME}}. Use antes de criar qualquer entity ou value-object. Extrai VOs, define invariantes e valida nomenclatura contra CONTEXT.md.
+description: {{PROJECT_NAME}} domain modeling. Use before creating any entity or value-object. Extracts VOs, defines invariants, and validates naming against CONTEXT.md.
 ---
 
 # Domain Modeler — {{PROJECT_NAME}}
 
-## Processo
+## Process
 
-### 1. Contexto
-Leia `CONTEXT.md` e o módulo em questão (`src/modules/<módulo>/entities/`).
+### 1. Context
+Read `CONTEXT.md` and the module in question (`src/modules/<module>/entities/`).
 
-### 2. Identificar candidatos a Value Object
+### 2. Identify Value Object candidates
 
-Para cada campo da entity proposta, pergunte:
-- Tem validação própria? (formato, range, regra de negócio)
-- Tem comportamento próprio? (métodos, transformações)
-- É comparado por valor, não por identidade?
+For each field of the proposed entity, ask:
+- Does it have its own validation? (format, range, business rule)
+- Does it have its own behavior? (methods, transformations)
+- Is it compared by value, not by identity?
 
-Se sim para qualquer um → é VO.
+If yes to any of these → it's a VO.
 
-Exemplos de extração:
+Extraction examples:
 ```
-Price       → não pode ser negativo, arredondamento monetário
-SKU / Code  → formato validado (ex: regex)
-Quantity    → inteiro positivo, sem zero
-Status      → enum com transições válidas (ex: PENDING → PROCESSING → CONFIRMED | FAILED)
-Email       → formato validado, normalizado em lowercase
+Price       → cannot be negative, monetary rounding
+SKU / Code  → validated format (e.g. regex)
+Quantity    → positive integer, no zero
+Status      → enum with valid transitions (e.g. PENDING → PROCESSING → CONFIRMED | FAILED)
+Email       → validated format, normalized to lowercase
 ```
 
-VO segue o padrão: construtor privado + `static create(raw): Either<InvalidXError, X>`.
-Referência: `entities/value-objects/` do módulo de referência (`src/modules/example/` enquanto existir: `item-name.ts` para VO simples, `item-status.ts` para enum com transições).
+VO follows the pattern: private constructor + `static create(raw): Either<InvalidXError, X>`.
+Reference: `entities/value-objects/` of the reference module (`src/modules/example/` while it exists: `item-name.ts` for a simple VO, `item-status.ts` for an enum with transitions).
 
-### 3. Definir invariantes da entity
+### 3. Define entity invariants
 
-Para cada regra de negócio identificada, decida:
-- Pertence à **entity** (invariante estrutural — ex: "preço não pode ser negativo")
-- Pertence ao **use-case** (regra de aplicação — ex: "estoque insuficiente bloqueia checkout")
+For each identified business rule, decide:
+- Belongs to the **entity** (structural invariant — e.g. "price cannot be negative")
+- Belongs to the **use-case** (application rule — e.g. "insufficient stock blocks checkout")
 
-Nunca coloque regra de aplicação dentro da entity.
+Never put an application rule inside the entity.
 
-### 4. Validar nomenclatura
+### 4. Validate naming
 
-- Nome da entity alinhado com `CONTEXT.md`? Se não, proponha atualização do glossário
-- VOs em `entities/value-objects/` com nome explícito (ex: `product-price.ts`, não `price.ts`)
+- Is the entity name aligned with `CONTEXT.md`? If not, propose a glossary update
+- VOs in `entities/value-objects/` with an explicit name (e.g. `product-price.ts`, not `price.ts`)
 
-### 5. Saída
+### 5. Output
 
-Antes de qualquer código, apresente:
+Before any code, present:
 
 ```
-Entity: <Nome>
-Campos:
+Entity: <Name>
+Fields:
   - id: string (UUID)
-  - <campo>: <Tipo> (VO | primitivo)
+  - <field>: <Type> (VO | primitive)
 
-Value Objects a criar:
-  - <Vo>: <regra>
+Value Objects to create:
+  - <Vo>: <rule>
 
-Invariantes da entity:
+Entity invariants:
   - ...
 
-Invariantes do use-case (NÃO na entity):
+Use-case invariants (NOT in the entity):
   - ...
 ```
 
-Aguarde aprovação antes de gerar código. Após aprovação, atualize `CONTEXT.md`.
+Wait for approval before generating code. After approval, update `CONTEXT.md`.

@@ -10,7 +10,7 @@ import { ItemName, type InvalidItemNameError } from '../../entities/value-object
 import type { IItemRepository } from '../../repositories/item-repository'
 import type { CreateItemInput, CreateItemOutput } from '../../dtos/create-item-dto'
 
-// Padrão de escrita: validar VOs (Either) → montar entity → persistir via port → logar/medir.
+// Write pattern: validate VOs (Either) → build entity → persist via port → log/measure.
 @injectable()
 export class CreateItemUseCase
   implements IUseCase<CreateItemInput, Either<InvalidItemNameError, CreateItemOutput>>
@@ -34,7 +34,7 @@ export class CreateItemUseCase
       addToContext({ itemId: item.id })
       span.setAttribute('item.id', item.id)
       metrics.itemsCreated.inc()
-      getLogger().info('item created') // itemId + correlationId vêm do contexto
+      getLogger().info('item created') // itemId + correlationId come from the context
 
       return right(item)
     } finally {

@@ -1,7 +1,7 @@
 import { type Either, left, right } from '@shared/core/either'
 import { DomainError } from '@shared/errors/domain-error'
 
-// Erro de validação do VO pode ficar no próprio arquivo do VO (só o VO o produz).
+// A VO's validation error can live in the VO's own file (only the VO produces it).
 export class InvalidItemStatusError extends DomainError {
   readonly code = 'INVALID_ITEM_STATUS'
   constructor(raw: string) {
@@ -19,7 +19,7 @@ export class InvalidItemStatusTransitionError extends DomainError {
 export const ITEM_STATUSES = ['ACTIVE', 'ARCHIVED'] as const
 export type ItemStatusValue = (typeof ITEM_STATUSES)[number]
 
-// Transições permitidas: ACTIVE → ARCHIVED. ARCHIVED é terminal.
+// Allowed transitions: ACTIVE → ARCHIVED. ARCHIVED is terminal.
 const TRANSITIONS: Record<ItemStatusValue, readonly ItemStatusValue[]> = {
   ACTIVE: ['ARCHIVED'],
   ARCHIVED: [],
@@ -36,7 +36,7 @@ export class ItemStatus {
     return new ItemStatus('ACTIVE')
   }
 
-  // Aceita string crua (banco é coluna String) e valida contra o enum.
+  // Accepts a raw string (the DB column is String) and validates it against the enum.
   static create(raw: string): Either<InvalidItemStatusError, ItemStatus> {
     if (!(ITEM_STATUSES as readonly string[]).includes(raw)) return left(new InvalidItemStatusError(raw))
     return right(new ItemStatus(raw as ItemStatusValue))

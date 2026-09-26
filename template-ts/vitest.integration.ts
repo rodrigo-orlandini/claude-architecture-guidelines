@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitest/config'
 import { resolve } from 'path'
 
-// Integration: Postgres/Redis reais de docker-compose.test.yml. Serial (singleFork) para não disputar o banco.
+// Integration: real Postgres/Redis from docker-compose.test.yml. Serial (singleFork) to avoid contending for the database.
 export default defineConfig({
   test: {
     globals: true,

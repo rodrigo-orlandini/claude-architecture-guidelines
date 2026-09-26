@@ -1,69 +1,70 @@
 ---
 name: domain-modeler
-description: Modelagem de domínio {{PROJECT_NAME}}. Use antes de criar qualquer entity ou value object. Extrai VOs, define invariantes e valida nomenclatura contra CONTEXT.md.
+description: Domain modeling for {{PROJECT_NAME}}. Use before creating any entity or value object. Extracts VOs, defines invariants, and validates naming against CONTEXT.md.
 ---
 
 # Domain Modeler — {{PROJECT_NAME}}
 
-## Processo
+## Process
 
-### 1. Contexto
-Leia `CONTEXT.md` e o módulo em questão (`internal/modules/<módulo>/domain/`).
+### 1. Context
+Read `CONTEXT.md` and the module in question (`internal/modules/<module>/domain/`).
 
-### 2. Identificar candidatos a Value Object
+### 2. Identify Value Object candidates
 
-Para cada campo da entity proposta, pergunte:
-- Tem validação própria? (formato, range, regra de negócio)
-- Tem comportamento próprio? (métodos, transformações)
-- É comparado por valor, não por identidade?
+For each field of the proposed entity, ask:
+- Does it have its own validation? (format, range, business rule)
+- Does it have its own behavior? (methods, transformations)
+- Is it compared by value, not by identity?
 
-Se sim para qualquer um → é VO.
+If yes to any of these → it's a VO.
 
-Exemplos de extração:
+Extraction examples:
 ```
-Price       → não pode ser negativo, arredondamento monetário
-Code        → formato validado (ex: regex)
-Quantity    → inteiro positivo, sem zero
-Status      → enum com transições válidas (ex: PENDING → PROCESSING → CONFIRMED | FAILED)
-Email       → formato validado, normalizado em lowercase
+Price       → cannot be negative, monetary rounding
+Code        → validated format (e.g. regex)
+Quantity    → positive integer, no zero
+Status      → enum with valid transitions (e.g. PENDING → PROCESSING → CONFIRMED | FAILED)
+Email       → validated format, normalized to lowercase
 ```
 
-Em Go, VO é um struct com campo não exportado + construtor `New<Vo>(raw) (<Vo>, error)` — o campo não exportado substitui o "construtor privado" do kit TS, já que só o próprio pacote pode montar o valor diretamente. Enum é um named string type com consts e (quando houver máquina de estados) um método `TransitionTo`.
+In Go, a VO is a struct with an unexported field + constructor `New<Vo>(raw) (<Vo>, error)` — the unexported field replaces the "private constructor" of the TS kit, since only the package itself can build the value directly. An enum is a named string type with consts and (when there's a state machine) a `TransitionTo` method.
 
-Referência: `internal/modules/example/domain/` enquanto existir (`item_name.go` para VO simples, `item_status.go` para enum com transições).
+Reference: `internal/modules/example/domain/` while it exists (`item_name.go` for a simple VO, `item_status.go` for an enum with transitions).
 
-### 3. Definir invariantes da entity
+### 3. Define entity invariants
 
-Para cada regra de negócio identificada, decida:
-- Pertence à **entity** (invariante estrutural — ex: "preço não pode ser negativo")
-- Pertence ao **use-case** (regra de aplicação — ex: "estoque insuficiente bloqueia checkout")
+For each identified business rule, decide:
+- It belongs to the **entity** (structural invariant — e.g. "price cannot be negative")
+- It belongs to the **use-case** (application rule — e.g. "insufficient stock blocks checkout")
 
-Nunca coloque regra de aplicação dentro da entity.
+Never put an application rule inside the entity.
 
-### 4. Validar nomenclatura
+### 4. Validate naming
 
-- Nome da entity alinhado com `CONTEXT.md`? Se não, proponha atualização do glossário
-- Sem prefixo `I` em interfaces (Go não usa Hungarian notation) — a porta é só `ItemRepository`, definida no pacote `usecase` que a consome
-- Pacotes em uma palavra minúscula (`domain`, `usecase`, não `use_cases` nem `useCases`); arquivos em `snake_case.go`
+- Is the entity name aligned with `CONTEXT.md`? If not, propose a glossary update
+- No `I` prefix on interfaces (Go doesn't use Hungarian notation) — the port is just `ItemRepository`, defined in the `usecase` package that consumes it
+- Packages in a single lowercase word (`domain`, `usecase`, not `use_cases` nor `useCases`); files in `snake_case.go`
 
-### 5. Saída
+### 5. Output
 
-Antes de qualquer código, apresente:
+Before any code, present:
 
 ```
-Entity: <Nome>
-Campos:
+Entity: <Name>
+Fields:
   - ID: string (UUID)
-  - <campo>: <Tipo> (VO | primitivo)
+  - <field>: <Type> (VO | primitive)
 
-Value Objects a criar:
-  - <Vo>: <regra>
+Value Objects to create:
+  - <Vo>: <rule>
 
-Invariantes da entity:
+Entity invariants:
   - ...
 
-Invariantes do use-case (NÃO na entity):
+Use-case invariants (NOT in the entity):
   - ...
 ```
 
-Aguarde aprovação antes de gerar código. Após aprovação, atualize `CONTEXT.md`.
+Wait for approval before generating code. After approval, update `CONTEXT.md`.
+</content>

@@ -3,8 +3,8 @@ import { Counter, Histogram, Registry } from 'prom-client'
 export const register = new Registry()
 register.setDefaultLabels({ service: '{{project-slug}}' })
 
-// Uma entrada por métrica de negócio. Convenção: <dominio>_<evento>_total (Counter),
-// <dominio>_<operacao>_duration_ms (Histogram). Exposto em GET /metrics.
+// One entry per business metric. Convention: <domain>_<event>_total (Counter),
+// <domain>_<operation>_duration_ms (Histogram). Exposed at GET /metrics.
 export const metrics = {
   httpRequestDuration: new Histogram({
     name: 'http_request_duration_ms',

@@ -1,43 +1,44 @@
 ---
 name: observability-enforcer
-description: Checklist de observabilidade {{PROJECT_NAME}}. Execute antes de fechar qualquer use-case ou handler. Verifica correlationId, métricas, spans e ausência de log não estruturado.
+description: Observability checklist for {{PROJECT_NAME}}. Run before closing any use-case or handler. Checks correlationId, metrics, spans, and the absence of unstructured logging.
 ---
 
 # Observability Enforcer — {{PROJECT_NAME}}
 
-Checklist executado sobre o arquivo ou módulo indicado. Reporte apenas itens faltando.
+Checklist run against the indicated file or module. Report only missing items.
 
 ## Checklist
 
-### Logger estruturado
-- [ ] `fmt.Println` / `log.Println` / `println` ausentes em todo arquivo analisado (exceção: erro fatal de bootstrap em `cmd/api/main.go`, que ainda não tem logger inicializado)
-- [ ] Logs via `observability.FromContext(ctx)` — nunca `slog.Default()` direto num handler ou use-case (perde correlationId/traceId)
-- [ ] IDs de negócio relevantes (ex: `orderId`) adicionados com `observability.AddFields(ctx, map[string]string{...})` assim que existirem — todo `FromContext` seguinte no mesmo request os inclui
+### Structured logger
+- [ ] `fmt.Println` / `log.Println` / `println` absent from every analyzed file (exception: fatal bootstrap error in `cmd/api/main.go`, which doesn't have a logger initialized yet)
+- [ ] Logs via `observability.FromContext(ctx)` — never `slog.Default()` directly in a handler or use-case (loses correlationId/traceId)
+- [ ] Relevant business IDs (e.g. `orderId`) added with `observability.AddFields(ctx, map[string]string{...})` as soon as they exist — every subsequent `FromContext` in the same request includes them
 
-### Métricas (`internal/platform/observability/metrics.go`)
-- [ ] Toda operação de negócio relevante tem Counter (`<dominio>_<evento>_total`)
-- [ ] Falhas relevantes têm Counter com label de motivo (`prometheus.CounterVec` com `reason` ou similar)
-- [ ] Operações com latência relevante têm Histogram (`<dominio>_<operacao>_duration_ms`)
-- [ ] Toda métrica nova está registrada no `Registry` (bloco `init()` de `metrics.go`) — sem isso não aparece em `/metrics`
+### Metrics (`internal/platform/observability/metrics.go`)
+- [ ] Every relevant business operation has a Counter (`<domain>_<event>_total`)
+- [ ] Relevant failures have a Counter with a reason label (`prometheus.CounterVec` with `reason` or similar)
+- [ ] Operations with relevant latency have a Histogram (`<domain>_<operation>_duration_ms`)
+- [ ] Every new metric is registered in the `Registry` (`init()` block of `metrics.go`) — without this it won't appear in `/metrics`
 
 ### Tracing (`internal/platform/observability/tracer.go`)
-- [ ] Span raiz `http.request`-equivalente já vem do middleware — handlers HTTP não abrem span próprio para a própria rota
-- [ ] Span filho em use-cases críticos: `ctx, span := observability.Tracer("<módulo>").Start(ctx, "<módulo>.<ação>")` com `defer span.End()`
-- [ ] IDs de negócio como atributo do span (`span.SetAttributes(...)`) quando relevante
-- [ ] Span propagado via `ctx` para chamadas externas (HTTP, fila, adapter) — nunca `context.Background()` criado no meio de um fluxo de request
+- [ ] The `http.request`-equivalent root span already comes from the middleware — HTTP handlers don't open their own span for their own route
+- [ ] Child span in critical use-cases: `ctx, span := observability.Tracer("<module>").Start(ctx, "<module>.<action>")` with `defer span.End()`
+- [ ] Business IDs as span attributes (`span.SetAttributes(...)`) when relevant
+- [ ] Span propagated via `ctx` to external calls (HTTP, queue, adapter) — never `context.Background()` created in the middle of a request flow
 
-### Erros
-- [ ] `httperr.DomainError.Code` presente e mapeado em `internal/platform/httperr/error.go`
-- [ ] Handler usa `errors.As` para decidir status — nunca `err.Error()` comparado por string
-- [ ] Stack trace / erro interno NÃO exposto ao cliente (mensagem genérica em 500; detalhe só no log)
+### Errors
+- [ ] `httperr.DomainError.Code` present and mapped in `internal/platform/httperr/error.go`
+- [ ] Handler uses `errors.As` to decide the status — never `err.Error()` compared by string
+- [ ] Stack trace / internal error NOT exposed to the client (generic message on 500; detail only in the log)
 
-## Formato de saída
+## Output format
 
 ```
-✅ correlationId propagado
-✅ logger estruturado em uso
-❌ métrica de falha ausente em create_order.go
-❌ span ausente em order_handler.go
+✅ correlationId propagated
+✅ structured logger in use
+❌ failure metric missing in create_order.go
+❌ span missing in order_handler.go
 ```
 
-Items ausentes bloqueiam a tarefa — adicione antes de seguir para arch-reviewer.
+Missing items block the task — add them before moving on to arch-reviewer.
+</content>

@@ -14,7 +14,7 @@ func isNoRows(err error) bool {
 // enforced by a DB constraint under concurrency (e.g. "no two bookings for
 // the same slot"), catch the driver error and turn it into a domain Either
 // instead of trusting a check-then-write race. See docs/architecture-rules.md,
-// "Padrões de domínio". Not used by the example module (Item has no such
+// "Error handling". Not used by the example module (Item has no such
 // constraint) — kept here as the pattern to copy.
 //
 // func isUniqueViolation(err error) bool {

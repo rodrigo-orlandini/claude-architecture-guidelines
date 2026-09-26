@@ -6,7 +6,7 @@ interface HttpError {
   message: string
 }
 
-// Todo DomainError.code novo precisa de entrada aqui — sem entrada vira 500.
+// Every new DomainError.code needs an entry here — no entry falls back to 500.
 const HTTP_STATUS_MAP: Record<string, number> = {
   VALIDATION_ERROR: 422,
   NOT_FOUND: 404,

@@ -1,52 +1,53 @@
 # {{PROJECT_NAME}}
 
-Monolito modular com Clean Architecture em Go (net/http nativo + sqlc + pgx + Postgres).
-Cada módulo em `internal/modules/<módulo>/` é um bounded context extraível como microsserviço sem retrabalho.
+Modular monolith with Clean Architecture in Go (native net/http + sqlc + pgx + Postgres).
+Each module in `internal/modules/<module>/` is a bounded context extractable as a microservice without rework.
 
-## Leitura obrigatória antes de codar
+## Required reading before coding
 
-- `CONTEXT.md` — glossário de domínio (nomes de entidades, módulos, invariantes)
-- `docs/architecture-rules.md` — regras invioláveis de camada, erros, DI manual, nomenclatura, testes, observabilidade
-- `docs/architecture.md` — design completo da estrutura
-- Módulo de referência: `internal/modules/example/` enquanto existir; depois de removido, o módulo real mais completo em `internal/modules/` — copie o padrão dele
+- `CONTEXT.md` — domain glossary (entity names, modules, invariants)
+- `docs/architecture-rules.md` — inviolable rules for layers, errors, manual DI, naming, tests, observability
+- `docs/architecture.md` — full structure design
+- Reference module: `internal/modules/example/` while it exists; after it's removed, the most complete real module in `internal/modules/` — copy its pattern
 
-## Fluxo de desenvolvimento
+## Development flow
 
-Início de sessão: invoque a skill `session-start`.
+Start of session: invoke the `session-start` skill.
 
 ```
-brainstorming (superpowers) → spec em docs/superpowers/specs/
-  → writing-plans → plano em docs/superpowers/plans/
+brainstorming (superpowers) → spec in docs/superpowers/specs/
+  → writing-plans → plan in docs/superpowers/plans/
   → domain-modeler (entities / VOs)
-  → tdd-agent (red → green → refactor por use-case)
+  → tdd-agent (red → green → refactor per use-case)
   → observability-enforcer
   → arch-reviewer (diff)
   → verification-before-completion
   → commit + PR
 ```
 
-Passos que pedem aprovação (brainstorming, domain-modeler, planos) exigem resposta do usuário. Em execução autônoma, sem ninguém para responder: decida pela opção mais simples compatível com `CONTEXT.md`, registre cada decisão numa seção **Premissas** da spec e siga; nunca invente requisito novo.
+Steps that require approval (brainstorming, domain-modeler, plans) require a response from the user. In autonomous execution, with no one to respond: decide on the simplest option compatible with `CONTEXT.md`, record each decision in an **Assumptions** section of the spec, and proceed; never invent a new requirement.
 
 ## Git
 
-- Toda tarefa nova: branch nova a partir de `origin/main` (`feat/<nome>`, `fix/<nome>`, `docs/<nome>`).
-- Commits em Conventional Commits (`feat(módulo): ...`, `fix(módulo): ...`).
-- Conclusão da tarefa: abrir PR para `main` (`gh pr create`). CI precisa passar (build → unit + integration → coverage 80%).
+- Every new task: new branch from `origin/main` (`feat/<name>`, `fix/<name>`, `docs/<name>`).
+- Commits in Conventional Commits (`feat(module): ...`, `fix(module): ...`).
+- Task completion: open a PR to `main` (`gh pr create`). CI must pass (build → unit + integration → coverage 80%).
 
 ## Prompts
 
-Salve todo prompt relevante em `prompts/`. Veja `prompts/CLAUDE.md` para convenção de nomes e estrutura. Atualize o índice em `PROMPTS.md`.
+Save every relevant prompt in `prompts/`. See `prompts/CLAUDE.md` for naming convention and structure. Update the index in `PROMPTS.md`.
 
-## Comandos
+## Commands
 
-- `go build ./...` — compila tudo
-- `go vet ./...` / `gofmt -l .` — lint (sem tool externa; golangci-lint é opcional, ver SETUP.md)
-- `go test ./...` — unit (sem I/O)
-- `go run ./cmd/migrate up` — aplica migrations no banco apontado por `DATABASE_URL`
-- `go test -tags=integration ./...` — roda contra `docker-compose.test.yml` (rode `go run ./cmd/migrate up` antes)
-- `bash scripts/check-coverage.sh 80 coverage.out` — checa threshold sobre `internal/modules/...`
-- `go run ./cmd/api` — sobe a API localmente
-- `go run ./scripts/compose -- <args>` — `docker compose` portátil; usa `wsl docker compose` automaticamente no Windows sem Docker Desktop (não precisa de Node, só do toolchain Go já exigido)
-- `go run ./scripts/compose -- up -d postgres` — sobe só o Postgres de dev
+- `go build ./...` — builds everything
+- `go vet ./...` / `gofmt -l .` — lint (no external tool; golangci-lint is optional, see SETUP.md)
+- `go test ./...` — unit (no I/O)
+- `go run ./cmd/migrate up` — applies migrations to the database pointed to by `DATABASE_URL`
+- `go test -tags=integration ./...` — runs against `docker-compose.test.yml` (run `go run ./cmd/migrate up` first)
+- `bash scripts/check-coverage.sh 80 coverage.out` — checks the threshold over `internal/modules/...`
+- `go run ./cmd/api` — starts the API locally
+- `go run ./scripts/compose -- <args>` — portable `docker compose`; automatically uses `wsl docker compose` on Windows without Docker Desktop (doesn't need Node, only the already-required Go toolchain)
+- `go run ./scripts/compose -- up -d postgres` — starts only the dev Postgres
 - `go run ./scripts/compose -- -f docker-compose.observability.yml up -d` — Prometheus, Grafana, Loki, Tempo
-- `make <alvo>` — atalhos para os comandos acima via `Makefile`, se `make` estiver disponível (opcional; todo alvo tem o comando `go`/`docker` equivalente documentado acima)
+- `make <target>` — shortcuts for the commands above via `Makefile`, if `make` is available (optional; every target has the equivalent `go`/`docker` command documented above)
+</content>

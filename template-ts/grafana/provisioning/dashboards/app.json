@@ -8,7 +8,7 @@
     {
       "id": 1,
       "type": "timeseries",
-      "title": "HTTP requests/s por rota",
+      "title": "HTTP requests/s per route",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [{ "expr": "sum by (route) (rate(http_request_duration_ms_count[1m]))", "legendFormat": "{{route}}" }]
@@ -32,7 +32,7 @@
     {
       "id": 4,
       "type": "logs",
-      "title": "Logs de erro",
+      "title": "Error logs",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [{ "expr": "{app=\"{{project-slug}}\"} | json | level >= 50" }]

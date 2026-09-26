@@ -1,28 +1,29 @@
-# 00 Estrutura Arquitetural
+# 00 Architectural Structure
 
-## Objetivo
+## Objective
 
-Aplicar a estrutura padrão em Go (monolito modular + Clean Architecture + skills/agentes Claude Code) ao {{PROJECT_NAME}}.
+Apply the standard Go structure (modular monolith + Clean Architecture + Claude Code skills/agents) to {{PROJECT_NAME}}.
 
-## Contexto
+## Context
 
-Prompt inicial do projeto, anterior a qualquer feature. Estrutura copiada de `_architecture/template-go/` (variante Go do kit originado no projeto CaseCellShop, em TypeScript).
+Initial project prompt, prior to any feature. Structure copied from `_architecture/template-go/` (Go variant of the kit originated in the reference project, in TypeScript).
 
 ## Prompt
 
 ```
-Leia <caminho>/_architecture/README.md e siga BOOTSTRAP-GO.md para aplicar a estrutura neste projeto.
-Nome do projeto: {{PROJECT_NAME}}. Domínio: <descrição curta>.
+Read <path>/_architecture/README.md and follow BOOTSTRAP-GO.md to apply the structure to this project.
+Project name: {{PROJECT_NAME}}. Domain: <short description>.
 ```
 
-## Critérios de Direcionamento
+## Direction Criteria
 
-Estrutura já validada em outro projeto (TS) e portada para Go preservando os princípios (monolito modular, regra de dependência, TDD, observabilidade) com o mecanismo idiomático da linguagem (interfaces sem prefixo `I`, `(T, error)` em vez de `Either`, wiring manual em vez de container de DI, `net/http` nativo em vez de framework). O prompt só aponta para o kit e informa nome e domínio; decisões de arquitetura não são re-discutidas.
+Structure already validated in another project (TS) and ported to Go preserving the principles (modular monolith, dependency rule, TDD, observability) with the language's idiomatic mechanism (interfaces without an `I` prefix, `(T, error)` instead of `Either`, manual wiring instead of a DI container, native `net/http` instead of a framework). The prompt only points to the kit and gives the name and domain; architecture decisions are not re-discussed.
 
-## Resultado
+## Result
 
-<preencher: o que foi gerado, o que foi ajustado>
+<fill in: what was generated, what was adjusted>
 
-## Revisões
+## Revisions
 
-Nenhuma.
+None.
+</content>

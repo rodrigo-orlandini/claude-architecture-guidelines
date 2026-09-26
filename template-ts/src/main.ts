@@ -8,7 +8,7 @@ import { buildApp } from '@infra/http/server'
 async function bootstrap(): Promise<void> {
   initTracer()
 
-  // Ordem: shared infra → módulos (um register<Modulo>Module por módulo) → HTTP → workers
+  // Order: shared infra → modules (one register<Module>Module per module) → HTTP → workers
   registerSharedInfra()
   registerExampleModule()
 

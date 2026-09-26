@@ -8,10 +8,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Convenção: model PascalCase singular, tabela snake_case plural (@@map), colunas snake_case (@map).
-// Enums de domínio: coluna String validada pelo VO no mapper (não use enum Prisma — acopla domínio ao client gerado).
+// Convention: model in singular PascalCase, table in plural snake_case (@@map), columns in snake_case (@map).
+// Domain enums: String column validated by the VO in the mapper (do not use Prisma enum — it couples the domain to the generated client).
 
-// Módulo example — apagar junto com src/modules/example.
+// example module — delete along with src/modules/example.
 model Item {
   id        String   @id @default(uuid())
   name      String
